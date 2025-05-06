@@ -46,11 +46,13 @@ const CreateUpdateSubCategoryPage = () => {
       name: Yup.string()
         .trim()
         .required("Name is required")
-        .max(30, "Name must be 30 characters or less"),
+        .max(30, "Name must be 30 characters or less")
+        .min(2, "Name must be at least 2 characters"),
       description: Yup.string()
         .trim()
         .required("Description is required")
-        .max(100, "Description must be 100 characters or less"),
+        .max(100, "Description must be 100 characters or less")
+        .min(10, "Description must be at least 10 characters"),
       categoryId: Yup.string().trim().required("Category is required"),
     }),
     onSubmit: (values) => handleSubmit(values),

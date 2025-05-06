@@ -3,11 +3,13 @@ import * as Yup from "yup";
 export const profileValidation = Yup.object().shape({
   firstName: Yup.string()
     .max(30, "First name must be at most 30 characters")
+    .min(2, "First name must be at least 2 characters")
     .matches(/^[A-Za-z]+$/, "First name can only contain letters")
     .required("First name is required"),
 
   lastName: Yup.string()
     .max(30, "Last name must be at most 30 characters")
+    .min(2, "Last name must be at least 2 characters")
     .matches(/^[A-Za-z]+$/, "Last name can only contain letters")
     .required("Last name is required"),
 

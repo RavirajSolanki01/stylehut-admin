@@ -140,7 +140,7 @@ const ProfilePage = () => {
   const handleImgCancelClick = () => {
     setFileUploadError("");
     setUploadedFile(null);
-    setUploadedFileUrl("");
+    setUploadedFileUrl(user.profile_url ? user.profile_url : null);
   };
 
   const updateProfile = async (payload: UserProfilePayload) => {
@@ -429,6 +429,7 @@ const ProfilePage = () => {
 
                         <button
                           className={`rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 ${uploadedFile === null ? "bg-opacity-70" : "hover:bg-opacity-90"}`}
+                          disabled={uploadedFile === null}
                           onClick={updateProfileImg}
                         >
                           Save
