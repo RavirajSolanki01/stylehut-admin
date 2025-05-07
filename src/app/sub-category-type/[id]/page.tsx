@@ -165,6 +165,19 @@ const CreateUpdateSubCategoryPage = () => {
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
     formik;
 
+  useEffect(() => {
+    if (values.name && values.categoryId && values.subCategoryId) {
+      const selectedCategory = categories.find(cat => String(cat.id) === values.categoryId);
+      const selectedSubCategory = subCategories.find(subCat => String(subCat.id) === values.subCategoryId);
+      
+      if (selectedCategory && selectedSubCategory) {
+        const autoDescription = `${selectedSubCategory.name} ${values.name} for ${selectedCategory.name}`;
+        setFieldValue('description', autoDescription);
+      }
+    }
+  }, [values.name, values.categoryId, values.subCategoryId, categories, subCategories, setFieldValue]);
+
+  
   return (
     <>
       <CentralLoader loading={loadingStates.categoriesLoading} />
