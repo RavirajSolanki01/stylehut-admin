@@ -43,6 +43,26 @@ const CreateUpdateSubCategoryPage = () => {
     categoriesLoading: false,
     formSubmitting: false,
   });
+  const [userModifiedDescription, setUserModifiedDescription] = useState(false);
+const getCategoryNameById = (id: string) => {
+  return categories.find((c) => String(c.id) === id)?.name || "";
+};
+const getSubCategoryNameById = (id: string) => {
+  return subCategories.find((c) => String(c.id) === id)?.name || "";
+};
+
+  useEffect(() => {
+  if (userModifiedDescription) return;
+
+  const { name, categoryId, subCategoryId } = formik.values;
+  const categoryName = getCategoryNameById(categoryId);
+  const subCategoryName = getSubCategoryNameById(subCategoryId);
+
+  const autoDescription = `This is a subcategory type for ${name}, under category ${categoryName} and subcategory ${subCategoryName}.`;
+
+  formik.setFieldValue("description", autoDescription);
+}, [formik.values.name, formik.values.categoryId, formik.values.subCategoryId, categories, subCategories, userModifiedDescription]);
+
 
   const formik = useFormik<FormValues>({
     initialValues: initialFormValues,
@@ -240,7 +260,11 @@ const CreateUpdateSubCategoryPage = () => {
                 placeholder="Enter description"
                 value={values.description}
                 required
-                handleChange={handleChange}
+{/*                 handleChange={handleChange} */}
+                 handleChange={(e) => {
+    setUserModifiedDescription(true); // mark that user edited it
+    handleChange(e); // formik handler
+  }}
                 handleBlur={handleBlur}
                 error={
                   touched.description && errors.description
