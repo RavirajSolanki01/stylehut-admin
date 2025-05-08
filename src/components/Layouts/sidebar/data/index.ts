@@ -52,6 +52,12 @@ export const NAV_DATA = [
         icon: Icons.StarIcon,
         items: [],
       },
+      {
+        title: "Coupon",
+        url: "/coupon",
+        icon: Icons.DiscountIcon,
+        items: [],
+      },
     ],
   },
 ];
