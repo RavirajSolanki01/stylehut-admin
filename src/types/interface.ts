@@ -203,3 +203,30 @@ export interface IReviewApiResponse {
   data: { data: { items: IReview[]; meta: IPaginationData } };
   status: number;
 }
+
+export interface ICoupon {
+  id: number;
+  code: string;
+  description?: string;
+  discount: number;
+  valid_from?: string;
+  valid_until: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ICouponApiResponse {
+  status: number;
+  data: {
+    data: {
+      items: ICoupon[];
+      meta: {
+        page: number;
+        pageSize: number;
+        totalPages: number;
+        totalItems: number;
+      };
+    };
+  };
+}

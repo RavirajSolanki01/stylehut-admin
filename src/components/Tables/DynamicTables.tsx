@@ -1,5 +1,7 @@
 "use client";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, Check } from "lucide-react";
+import { useState } from "react";
+import { toast } from "react-toastify";
 
 import {
   Table,
@@ -51,6 +53,8 @@ export function DynamicTable<T extends { id: number | string }>({
   handlePageChange,
   currentPage,
 }: DynamicTableProps<T>) {
+  const [copiedId, setCopiedId] = useState<string | number | null>(null);
+
   const getArrow = (key: keyof T) =>
     sortKey === key ? (
       sortOrder === "asc" ? (
@@ -65,6 +69,43 @@ export function DynamicTable<T extends { id: number | string }>({
     const end = Math.min(totalPages, start + 2);
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   };
+
+  const handleCopyToClipboard = async (text: string, id: string | number) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      toast.success("Coupon code copied to clipboard!");
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      toast.error("Failed to copy coupon code");
+    }
+  };
+
+  const renderCell = (col: ColumnConfig<T>, value: T[keyof T], row: T, index: number) => {
+    if (col.key === "coupon_code" || col.key === "code") {
+      return (
+        <div 
+          className="flex cursor-pointer items-center gap-2 hover:text-primary"
+          onClick={() => handleCopyToClipboard(String(value), row.id)}
+        >
+          <span>{String(value)}</span>
+          {copiedId === row.id ? (
+            <Check size={16} className="text-green-500" />
+          ) : (
+            <Copy size={16} />
+          )}
+        </div>
+      );
+    }
+    return col.render ? col.render(value, row, index) : String(value);
+  };
+
+  // Add null check before logging
+  if (data === undefined) {
+    console.warn("Data is undefined in DynamicTable component");
+  } else {
+    console.log("Table data:", data);
+  }
 
   return (
     <div className="rounded-lg border bg-white p-4 shadow-sm dark:bg-gray-900">
@@ -102,9 +143,7 @@ export function DynamicTable<T extends { id: number | string }>({
                     className="whitespace-nowrap"
                     key={String(col.key)}
                   >
-                    {col.render
-                      ? col.render(row[col.key], row, index)
-                      : String(row[col.key])}
+                    {renderCell(col, row[col.key], row, index)}
                   </TableCell>
                 ))}
                 {actions && <TableCell>{actions(row)}</TableCell>}
