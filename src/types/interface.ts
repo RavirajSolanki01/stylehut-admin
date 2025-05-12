@@ -209,8 +209,9 @@ export interface ICoupon {
   code: string;
   description?: string;
   discount: number;
-  valid_from?: string;
-  valid_until: string;
+  max_savings_amount: number;
+  min_order_amount: number;
+  expiry_date: string;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;

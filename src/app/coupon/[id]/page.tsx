@@ -11,15 +11,23 @@ import { CentralLoader, SmallLoader } from "@/components/Loader";
 import apiService from "@/services/base.services";
 
 type FormValues = {
+  max_savings_amount: string | number | undefined;
+  min_order_amount: string | number | undefined;
   code: string;
   discount: number;
   isActive: boolean;
+  discount_text: string;
+  expiry_date: string;
 };
 
 const initialFormValues: FormValues = {
   code: "",
   discount: 0,
+  max_savings_amount: 0,
+  min_order_amount: 0,
   isActive: true,
+  discount_text: "",
+  expiry_date: "",
 };
 
 const CreateUpdateCouponPage = () => {
@@ -46,6 +54,17 @@ const CreateUpdateCouponPage = () => {
         .required("Discount is required")
         .min(1, "Discount must be at least 1%")
         .max(100, "Discount cannot exceed 100%"),
+
+      max_savings_amount: Yup.number()
+        .typeError("Maximum savings must be a number")
+        .required("Maximum savings is required")
+        .min(1, "Maximum savings must be at least 1"),
+      min_order_amount: Yup.number()
+        .typeError("Minimum order amount must be a number")
+        .required("Minimum order amount is required")
+        .min(1, "Minimum order amount must be at least 1"),
+      discount_text: Yup.string().required("Discount text is required"),
+      expiry_date: Yup.date().required("Expiry date is required"),
     }),
     onSubmit: (values) => handleSubmit(values),
     enableReinitialize: true,
@@ -57,18 +76,26 @@ const CreateUpdateCouponPage = () => {
       const response = await apiService.get(`/coupon/${id}`, {
         withAuth: true,
       });
-      
+
       if (response.status === 200) {
         const {
           code,
           discount,
           is_active = true,
+          max_savings_amount,
+          min_order_amount,
+          discount_text,
+          expiry_date,
         } = (response.data as any).data;
 
         formik.setValues({
           code,
           discount: Number(discount),
+          max_savings_amount: Number(max_savings_amount),
+          min_order_amount: Number(min_order_amount),
           isActive: is_active,
+          discount_text,
+          expiry_date: expiry_date ? new Date(expiry_date).toISOString().split('T')[0] : '',   
         });
       }
     } catch (error: any) {
@@ -95,8 +122,12 @@ const CreateUpdateCouponPage = () => {
     try {
       const payload = {
         coupon_code: values.code,
-        discount: values.discount,
+        discount: Number(values.discount),
         is_active: values.isActive,
+        max_savings_amount: Number(values.max_savings_amount),
+        min_order_amount: Number(values.min_order_amount),
+        discount_text: values.discount_text,
+        expiry_date: values.expiry_date,
       };
 
       const response = await method(endpoint, payload, {
@@ -158,13 +189,16 @@ const CreateUpdateCouponPage = () => {
                 required
                 value={values.discount}
                 handleChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, '');
-                  if (value === '' || (Number(value) >= 1 && Number(value) <= 100)) {
+                  const value = e.target.value.replace(/[^0-9]/g, "");
+                  if (
+                    value === "" ||
+                    (Number(value) >= 1 && Number(value) <= 100)
+                  ) {
                     handleChange({
                       target: {
-                        name: 'discount',
-                        value: value
-                      }
+                        name: "discount",
+                        value: value,
+                      },
                     });
                   }
                 }}
@@ -172,6 +206,105 @@ const CreateUpdateCouponPage = () => {
                 height="sm"
                 error={
                   touched.discount && errors.discount ? errors.discount : ""
+                }
+              />
+
+              <div className="md:flex md:gap-2">
+                <InputGroup
+                  className="mb-5 w-full sm:w-9/12 md:w-1/4"
+                  type="text"
+                  name="max_savings_amount"
+                  label="Maximum Savings Amount"
+                  placeholder="Enter maximum savings amount"
+                  required
+                  value={values.max_savings_amount}
+                  handleChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9]/g, "");
+                    if (
+                      value === "" ||
+                      (Number(value) >= 1 && Number(value) <= 9999999999)
+                    ) {
+                      handleChange({
+                        target: {
+                          name: "max_savings_amount",
+                          value: value,
+                        },
+                      });
+                    }
+                  }}
+                  handleBlur={handleBlur}
+                  height="sm"
+                  error={
+                    touched.max_savings_amount && errors.max_savings_amount
+                      ? errors.max_savings_amount
+                      : ""
+                  }
+                />
+                <InputGroup
+                  className="mb-5 w-full sm:w-9/12 md:w-1/4"
+                  type="text"
+                  name="min_order_amount"
+                  label="Minimum Order Amount"
+                  placeholder="Enter minimum order amount"
+                  required
+                  value={values.min_order_amount}
+                  handleChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9]/g, "");
+                    if (
+                      value === "" ||
+                      (Number(value) >= 1 && Number(value) <= 9999999999)
+                    ) {
+                      handleChange({
+                        target: {
+                          name: "min_order_amount",
+                          value: value,
+                        },
+                      });
+                    }
+                  }}
+                  handleBlur={handleBlur}
+                  height="sm"
+                  error={
+                    touched.min_order_amount && errors.min_order_amount
+                      ? errors.min_order_amount
+                      : ""
+                  }
+                />
+              </div>
+
+              <InputGroup
+                className="mb-5 w-full sm:w-9/12 md:w-1/2"
+                type="text"
+                name="discount_text"
+                label="Discount Text"
+                placeholder="Enter discount text"
+                required
+                value={values.discount_text}
+                handleChange={handleChange}
+                handleBlur={handleBlur}
+                height="sm"
+                error={
+                  touched.discount_text && errors.discount_text
+                    ? errors.discount_text
+                    : ""
+                }
+              />
+
+              <InputGroup
+                className="mb-5 w-full sm:w-9/12 md:w-1/2"
+                type="date"
+                name="expiry_date"
+                label="Expiry Date"
+                placeholder="Enter expiry date"
+                required
+                value={values.expiry_date}
+                handleChange={handleChange}
+                handleBlur={handleBlur}
+                height="sm"
+                error={
+                  touched.expiry_date && errors.expiry_date
+                    ? errors.expiry_date
+                    : ""
                 }
               />
 
