@@ -16,6 +16,7 @@ import { DEFAULT_PAGINATION } from "@/utils/common";
 import useDebounce from "@/hooks/useDebounce";
 import { CentralLoader } from "@/components/Loader";
 import CommonDialog from "@/components/Dialog/CommonDialog";
+import dayjs from "dayjs";
 
 const CouponPage = () => {
   const router = useRouter();
@@ -174,24 +175,33 @@ const CouponPage = () => {
                   return `${discount}%`;
                 },
               },
-              // {
-              //   key: "valid_from",
-              //   label: "Valid From",
-              //   sortable: true,
-              //   render: (val) =>
-              //     val && (typeof val === "string" || typeof val === "number")
-              //       ? dayjs(val).format("MMM DD, YYYY")
-              //       : "-",
-              // },
-              // {
-              //   key: "valid_until",
-              //   label: "Valid Until",
-              //   sortable: true,
-              //   render: (val) =>
-              //     val && (typeof val === "string" || typeof val === "number")
-              //       ? dayjs(val).format("MMM DD, YYYY")
-              //       : "-",
-              // },
+              {
+                key: "max_savings_amount",
+                label: "Max Savings Amount",
+                sortable: true,
+                render: (val) =>
+                  val && (typeof val === "string" || typeof val === "number")
+                    ? `₹${val}`
+                    : "-",
+              },
+              {
+                key: "min_order_amount",
+                label: "Min Order Amount",
+                sortable: true,
+                render: (val) =>
+                  val && (typeof val === "string" || typeof val === "number")
+                    ? `₹${val}`
+                    : "-",
+              },
+              {
+                key: "expiry_date",
+                label: "Expiry Date",
+                sortable: true,
+                render: (val) =>
+                  val && (typeof val === "string" || typeof val === "number")
+                    ? dayjs(val).format("MMM DD, YYYY")
+                    : "-",
+              },
               {
                 key: "is_active",
                 label: "Status",
