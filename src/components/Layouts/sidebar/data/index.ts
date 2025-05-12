@@ -58,6 +58,18 @@ export const NAV_DATA = [
         icon: Icons.DiscountIcon,
         items: [],
       },
+      {
+        title: "Terms & Conditions",
+        url: "/terms",
+        icon: Icons.TermsIcon,
+        items: [],
+      },
+      {
+        title: "Privacy Policy",
+        url: "/privacy",
+        icon: Icons.PrivacyIcon,
+        items: [],
+      },
     ],
   },
 ];
