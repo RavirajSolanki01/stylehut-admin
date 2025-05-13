@@ -13,7 +13,6 @@ import {
   FaListOl,
   FaListUl,
   FaItalic,
-  FaSave,
 } from "react-icons/fa";
 import apiService from "@/services/base.services";
 import { toast } from "react-toastify";
@@ -124,9 +123,8 @@ export default function Privacy() {
 
   const fetchTerms = async () => {
     try {
-      const response: any = await apiService.get("/terms", { withAuth: true });
+      const response: any = await apiService.get("/policy", { withAuth: true });
       const data = response.data;
-      console.log(data?.data[0]?.description, ">><< DATSA IS HERE");
       setContent(data?.data[0]?.description);
       setCurrentId(data?.data[0]?.id);
       // return data;
@@ -140,23 +138,23 @@ export default function Privacy() {
     try {
       const response = currentId
         ? await apiService.put(
-            "/terms",
+            "/policy",
             { description: editor?.getHTML(), id: currentId },
             { withAuth: true },
           )
         : await apiService.post(
-            "/terms",
+            "/policy",
             { description: editor?.getHTML() },
             { withAuth: true },
           );
       const data = response.data;
       if (data) {
-        toast.success("Terms and Conditions updated successfully");
+        toast.success("Privacy Policy updated successfully");
         setIsEditing(false);
         fetchTerms();
       }
     } catch (error) {
-      console.error("Error saving terms:", error);
+      console.error("Error saving privacy policy:", error);
     }
   };
   useEffect(() => {
@@ -186,7 +184,7 @@ export default function Privacy() {
   return (
     <div className="min-h-[500px] rounded-md border border-gray-300 p-4">
       <Head>
-        <title>Terms and Conditions</title>
+        <title>Privacy Policy</title>
       </Head>
       <CentralLoader loading={isLoading} />
 
