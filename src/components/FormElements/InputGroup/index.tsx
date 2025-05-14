@@ -51,7 +51,11 @@ const InputGroup: React.FC<InputGroupProps> = ({
         "ArrowRight",
         "Tab",
       ];
-      if (!/^\d$/.test(event.key) && !allowedKeys.includes(event.key)) {
+      if (
+        !/^\d$/.test(event.key) &&
+        !allowedKeys.includes(event.key) &&
+        ["e", "E", "+", "-"].includes(event.key)
+      ) {
         event.preventDefault();
       }
     }

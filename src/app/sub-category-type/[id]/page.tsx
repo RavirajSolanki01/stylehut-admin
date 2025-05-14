@@ -14,7 +14,6 @@ import { Select } from "@/components/FormElements/select";
 import {
   ICategory,
   IGetAllCategoriesResponse,
-  ISubCategory,
   ISubCategoryType,
 } from "@/types/interface";
 
@@ -43,7 +42,7 @@ const CreateUpdateSubCategoryPage = () => {
     categoriesLoading: false,
     formSubmitting: false,
   });
- 
+
   const formik = useFormik<FormValues>({
     initialValues: initialFormValues,
     validationSchema: Yup.object({
@@ -55,7 +54,7 @@ const CreateUpdateSubCategoryPage = () => {
       description: Yup.string()
         .trim()
         .required("Description is required")
-        .max(100, "Description must be 100 characters or less")
+        .max(1024, "Description must be 1024 characters or less")
         .min(10, "Description must be at least 10 characters"),
       categoryId: Yup.string().trim().required("Category is required"),
       subCategoryId: Yup.string().trim().required("Subcategory is required"),
@@ -167,17 +166,27 @@ const CreateUpdateSubCategoryPage = () => {
 
   useEffect(() => {
     if (values.name && values.categoryId && values.subCategoryId) {
-      const selectedCategory = categories.find(cat => String(cat.id) === values.categoryId);
-      const selectedSubCategory = subCategories.find(subCat => String(subCat.id) === values.subCategoryId);
-      
+      const selectedCategory = categories.find(
+        (cat) => String(cat.id) === values.categoryId,
+      );
+      const selectedSubCategory = subCategories.find(
+        (subCat) => String(subCat.id) === values.subCategoryId,
+      );
+
       if (selectedCategory && selectedSubCategory) {
         const autoDescription = `${selectedSubCategory.name} ${values.name} for ${selectedCategory.name}`;
-        setFieldValue('description', autoDescription);
+        setFieldValue("description", autoDescription);
       }
     }
-  }, [values.name, values.categoryId, values.subCategoryId, categories, subCategories, setFieldValue]);
+  }, [
+    values.name,
+    values.categoryId,
+    values.subCategoryId,
+    categories,
+    subCategories,
+    setFieldValue,
+  ]);
 
-  
   return (
     <>
       <CentralLoader loading={loadingStates.categoriesLoading} />

@@ -99,7 +99,7 @@ const PaginationEllipsis = ({
   <span
     aria-hidden
     className={cn(
-      "flex h-9 w-9 items-center justify-center dark:text-neutral-100",
+      "relative flex h-9 w-9 items-center justify-center dark:text-neutral-100",
       className,
     )}
     {...props}

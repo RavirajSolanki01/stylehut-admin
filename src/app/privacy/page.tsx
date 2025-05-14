@@ -182,7 +182,7 @@ export default function Privacy() {
   }, 1000);
 
   return (
-    <div className="min-h-[500px] rounded-md border border-gray-300 p-4">
+    <>
       <Head>
         <title>Privacy Policy</title>
       </Head>
@@ -297,6 +297,6 @@ export default function Privacy() {
           </>
         )}
       </Layout>
-    </div>
+    </>
   );
 }

@@ -64,10 +64,36 @@ export function DynamicTable<T extends { id: number | string }>({
       )
     ) : null;
 
-  const getVisiblePages = (): number[] => {
-    const start = Math.max(1, currentPage - 1);
-    const end = Math.min(totalPages, start + 2);
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  const getVisiblePages = (): (number | "...")[] => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    if (currentPage <= 4) {
+      return [1, 2, 3, 4, 5, "...", totalPages];
+    }
+
+    if (currentPage >= totalPages - 3) {
+      return [
+        1,
+        "...",
+        totalPages - 4,
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages,
+      ];
+    }
+
+    return [
+      1,
+      "...",
+      currentPage - 1,
+      currentPage,
+      currentPage + 1,
+      "...",
+      totalPages,
+    ];
   };
 
   const handleCopyToClipboard = async (text: string, id: string | number) => {
@@ -81,10 +107,15 @@ export function DynamicTable<T extends { id: number | string }>({
     }
   };
 
-  const renderCell = (col: ColumnConfig<T>, value: T[keyof T], row: T, index: number) => {
+  const renderCell = (
+    col: ColumnConfig<T>,
+    value: T[keyof T],
+    row: T,
+    index: number,
+  ) => {
     if (col.key === "coupon_code" || col.key === "code") {
       return (
-        <div 
+        <div
           className="flex cursor-pointer items-center gap-2 hover:text-primary"
           onClick={() => handleCopyToClipboard(String(value), row.id)}
         >
@@ -163,22 +194,22 @@ export function DynamicTable<T extends { id: number | string }>({
               />
             </PaginationItem>
 
-            {getVisiblePages().map((page) => (
-              <PaginationItem key={page}>
-                <PaginationLink
-                  href="#"
-                  isActive={page === currentPage}
-                  onClick={() => handlePageChange(page)}
-                >
-                  {page}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-
-            {totalPages > 3 && getVisiblePages().at(-1)! < totalPages && (
-              <PaginationItem>
-                <PaginationEllipsis />
-              </PaginationItem>
+            {getVisiblePages().map((page, index) =>
+              page === "..." ? (
+                <PaginationItem key={`ellipsis-${index}`}>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              ) : (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    href="#"
+                    isActive={page === currentPage}
+                    onClick={() => handlePageChange(page)}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ),
             )}
 
             <PaginationItem>
