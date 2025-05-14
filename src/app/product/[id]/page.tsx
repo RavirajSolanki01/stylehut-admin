@@ -73,13 +73,13 @@ const CreateUpdateProductPage = () => {
       name: Yup.string()
         .trim()
         .required("Name is required")
-        .max(30, "Name must be 30 characters or less")
+        .max(40, "Name must be 40 characters or less")
         .min(2, "Name must be at least 2 characters"),
 
       description: Yup.string()
         .trim()
         .required("Description is required")
-        .max(100, "Description must be 100 characters or less")
+        .max(1024, "Description must be 1024 characters or less")
         .min(10, "Description must be at least 10 characters"),
 
       categoryId: Yup.string().trim().required("Please select a category"),
@@ -468,6 +468,7 @@ const CreateUpdateProductPage = () => {
                 handleChange={handleChange}
                 handleBlur={handleBlur}
                 height="sm"
+                isNumeric
                 min={0}
                 max={99}
                 error={

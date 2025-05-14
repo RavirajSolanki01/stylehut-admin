@@ -184,7 +184,7 @@ export default function Terms() {
   }, 1000);
 
   return (
-    <div className="min-h-[500px] rounded-md border border-gray-300 p-4">
+    <>
       <Head>
         <title>Terms and Conditions</title>
       </Head>
@@ -299,6 +299,6 @@ export default function Terms() {
           </>
         )}
       </Layout>
-    </div>
+    </>
   );
 }
