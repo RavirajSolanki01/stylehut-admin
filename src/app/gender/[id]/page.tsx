@@ -30,7 +30,7 @@ const CreateUpdateGenderPage = () => {
       name: Yup.string()
         .trim()
         .required("Name is required")
-        .max(30, "Name must be 30 characters or less")
+        .max(40, "Name must be 40 characters or less")
         .min(2, "Name must be at least 2 characters"),
     }),
     onSubmit: (values) => {
