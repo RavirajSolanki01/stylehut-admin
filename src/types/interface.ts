@@ -170,6 +170,7 @@ export interface IUser {
   is_deleted: boolean;
   role: IRole;
   gender: IUserGender;
+  is_active? : boolean
 }
 export interface IUserApiResponse {
   data: { data: { items: IUser[]; meta: IPaginationData } };

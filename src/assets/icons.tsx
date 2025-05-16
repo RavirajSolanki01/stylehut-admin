@@ -455,3 +455,17 @@ export function GenderIcon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function ReviewMagnifierIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width={40}
+      height={40}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
+      <path d="M10 2a8 8 0 105.293 14.293l4.707 4.707 1.414-1.414-4.707-4.707A8 8 0 0010 2zm0 14a6 6 0 116-6 6.006 6.006 0 01-6 6z" />
+    </svg>
+  );
+}
