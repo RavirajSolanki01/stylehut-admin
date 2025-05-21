@@ -2,10 +2,11 @@
 import React, { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import NextTopLoader from "nextjs-toploader";
+import { toast } from "react-toastify";
+
 import { CentralLoader, SmallLoader } from "@/components/Loader";
 import { ReviewMagnifierIcon } from "@/assets/icons";
 import apiService from "@/services/base.services";
-import { toast } from "react-toastify";
 
 const CheckAdminActivate = () => {
   const router = useRouter();

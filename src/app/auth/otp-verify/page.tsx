@@ -5,11 +5,11 @@ import * as Yup from "yup";
 import { toast } from "react-toastify";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
+import { useDispatch } from "react-redux";
 import NextTopLoader from "nextjs-toploader";
 
 import apiService from "@/services/base.services";
 import { SmallLoader, CentralLoader } from "@/components/Loader";
-import { useDispatch } from "react-redux";
 import { addAuthToken, addUserRole } from "@/store/slice/auth.slice";
 
 //@ts-expect-error

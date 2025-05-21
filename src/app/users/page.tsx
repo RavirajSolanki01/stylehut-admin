@@ -5,6 +5,8 @@ import Head from "next/head";
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import { RiLoopRightLine } from "react-icons/ri";
+import { useSelector } from "react-redux";
+
 import Layout from "@/components/Layouts";
 import { DynamicTable } from "@/components/Tables/DynamicTables";
 import apiService from "@/services/base.services";
@@ -12,7 +14,6 @@ import { IUser, IUserApiResponse } from "@/types/interface";
 import { DEFAULT_PAGINATION } from "@/utils/common";
 import useDebounce from "@/hooks/useDebounce";
 import { CentralLoader } from "@/components/Loader";
-import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 
 type ColumnConfig<T> = {
