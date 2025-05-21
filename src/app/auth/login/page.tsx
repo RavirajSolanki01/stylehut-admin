@@ -3,10 +3,10 @@ import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 import InputGroup from "@/components/FormElements/InputGroup";
 import apiService from "@/services/base.services";
-import { toast } from "react-toastify";
 import { SmallLoader } from "@/components/Loader";
 
 const Login = () => {
