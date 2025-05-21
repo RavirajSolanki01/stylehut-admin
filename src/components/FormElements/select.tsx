@@ -17,6 +17,7 @@ type PropsType = {
   defaultValue?: string;
   name?: string;
   error?: string;
+  disabled?: boolean;
 };
 
 export function Select({
@@ -32,6 +33,7 @@ export function Select({
   onBluer,
   name,
   error,
+  disabled,
 }: PropsType) {
   const id = useId();
 
@@ -69,6 +71,7 @@ export function Select({
           value={isControlled ? value : selected}
           onChange={handleChange}
           onBlur={onBluer}
+          disabled={disabled}
           className={cn(
             "w-full appearance-none rounded-lg border border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-dark-3 dark:bg-dark-2 dark:focus:border-primary [&>option]:text-dark-5 dark:[&>option]:text-dark-6",
             isOptionSelected && "text-dark dark:text-white",

@@ -4,7 +4,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { toast } from "react-toastify";
 import { useEffect, useState, useCallback } from "react";
-
+import { v4 as uuidv4 } from "uuid";
 import Layout from "@/components/Layouts";
 import InputGroup from "@/components/FormElements/InputGroup";
 import { TextAreaGroup } from "@/components/FormElements/InputGroup/text-area";
@@ -18,6 +18,8 @@ import {
   IGetAllCategoriesResponse,
   IGetAllSubCategoriesType,
   IProduct,
+  ISize,
+  ISizeApiResponse,
   ISubCategoryType,
 } from "@/types/interface";
 import { ImageUpload } from "@/components/FormElements/InputGroup/upload-file";
@@ -34,6 +36,7 @@ type FormValues = {
   discount: number;
   quantity: number;
   images: string[] | File[];
+  size: string;
 };
 
 const initialFormValues: FormValues = {
@@ -47,18 +50,42 @@ const initialFormValues: FormValues = {
   quantity: 0,
   images: [],
   discount: 0,
+  size: "",
 };
 
 const CreateUpdateProductPage = () => {
   const router = useRouter();
   const { id } = useParams();
   const isEditMode = id !== "new";
+  const isVariantMode = (id as string)?.startsWith("new_variant");
+  console.log(
+    decodeURIComponent(id as string),
+    ">><< id",
+    isVariantMode,
+    ">><< isVariantMode",
+  );
+
+  const [{ customProductId, variantId }, setCustomProductVariantId] = useState({
+    customProductId: uuidv4(),
+    variantId: uuidv4(),
+  });
 
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [subCategories, setSubCategories] = useState<ICategory[]>([]);
   const [subCategoriesType, setSubCategoriesType] = useState<
     ISubCategoryType[]
   >([]);
+  const [mainProduct, setMainProduct] = useState<IProduct[]>([]);
+  const [size, setSize] = useState<
+    { id: number; name: string; size: string }[]
+  >([]);
+  const [sizeQuantity, setSizeQuantity] = useState<{
+    [key: string]: string;
+  }>({});
+  const [sizeType, setSizeType] = useState<string>("");
+  const [isSizeAdded, setIsSizeAdded] = useState<boolean>(false);
+  const [isSizeQuantityAdded, setIsSizeQuantityAdded] =
+    useState<boolean>(false);
   const [brands, setBrand] = useState<IBrand[]>([]);
   const [deletedImages, setDeletedImages] = useState<string[]>([]);
 
@@ -110,16 +137,11 @@ const CreateUpdateProductPage = () => {
         .min(1, "Please upload at least 1 image")
         .max(8, "You can upload a maximum of 8 images")
         .required("Image upload is required"),
-
+      size: Yup.string().required("Size is required"),
       price: Yup.number()
         .typeError("Price must be a number")
         .required("Price is required")
         .moreThan(0, "Price must be greater than 0"),
-      discount: Yup.number()
-        .typeError("Discount must be a number")
-        .required("Discount is required")
-        .min(0, "Discount cannot be less than 0")
-        .lessThan(100, "Discount must be less than 100"),
     }),
     onSubmit: (values) => handleSubmit(values),
     enableReinitialize: true,
@@ -133,6 +155,28 @@ const CreateUpdateProductPage = () => {
         { withAuth: true },
       );
       if (res.status === 200) setCategories(res.data.data);
+    } catch {
+      toast.error("Something went wrong, please try again later.");
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, productLoading: false }));
+    }
+  }, []);
+
+  const fetchAllSizeData = useCallback(async () => {
+    try {
+      setLoadingStates((prev) => ({ ...prev, productLoading: true }));
+      const res: ISizeApiResponse = await apiService.get("/size", {
+        withAuth: true,
+      });
+      if (res.status === 200) {
+        setSize(
+          res.data.map((item: ISize) => ({
+            id: item.id,
+            size: item.size,
+            name: item.name,
+          })),
+        );
+      }
     } catch {
       toast.error("Something went wrong, please try again later.");
     } finally {
@@ -193,9 +237,12 @@ const CreateUpdateProductPage = () => {
   const fetchSubCategoryDetails = useCallback(async () => {
     try {
       const response: { data: { data: IProduct }; status: number } =
-        await apiService.get(`/product/${id}`, {
-          withAuth: true,
-        });
+        await apiService.get(
+          `/product/${isVariantMode ? decodeURIComponent(id as string).split("=")[1] : id}`,
+          {
+            withAuth: true,
+          },
+        );
       if (response.status === 200) {
         const {
           name,
@@ -210,20 +257,41 @@ const CreateUpdateProductPage = () => {
           quantity,
           discount,
           image,
+          relatedProducts,
+          size_quantities,
         } = response.data.data;
+        setMainProduct(relatedProducts);
+        const customObject = size_quantities.reduce((acc, item) => {
+          const sizeId = item.size_data.id;
+          const sizeLabel = item.size_data.size;
+          const key = `quantity==${sizeId}==${sizeLabel}`;
+          acc[key] = item.quantity;
+          return acc;
+        }, {} as any);
+        setSizeQuantity(customObject);
+        setCustomProductVariantId((pre) => ({
+          ...pre,
+          variantId: response.data.data.variant_id,
+        }));
+        setSizeType(
+          response.data.data?.size_quantities[0]?.size_data?.name as string,
+        );
 
         formik.setValues({
           name,
-          description,
+          description: isVariantMode ? "" : description,
           categoryId: String(category.id),
           subCategoryId: String(sub_category.id),
           brandId: String(brand_id),
           price: Number(price),
           subCategoryTypeId: String(sub_category_type_id),
           quantity,
-          images: image,
+          images: isVariantMode ? [] : image,
           discount,
+          size: response.data.data?.size_quantities[0]?.size_data
+            ?.name as string,
         });
+
         fetchAllSubCategoriesWithId(String(category_id));
         fetchAllSubCategoriesTypeWithId(
           String(category.id),
@@ -241,9 +309,17 @@ const CreateUpdateProductPage = () => {
 
   const handleSubmit = async (values: FormValues) => {
     setLoadingStates((prev) => ({ ...prev, formSubmitting: true }));
+    const endpoint = isVariantMode
+      ? `/product`
+      : isEditMode
+        ? `/product/${id}`
+        : "/product";
 
-    const endpoint = isEditMode ? `/product/${id}` : "/product";
-    const method = isEditMode ? apiService.put : apiService.post;
+    const method = isVariantMode
+      ? apiService.post
+      : isEditMode
+        ? apiService.put
+        : apiService.post;
     const successMessage = isEditMode
       ? "Product updated successfully"
       : "Product created successfully";
@@ -264,8 +340,11 @@ const CreateUpdateProductPage = () => {
       formData.append("sub_category_type_id", values.subCategoryTypeId);
       formData.append("brand_id", values.brandId);
       formData.append("price", String(values.price));
-      formData.append("quantity", String(values.quantity));
       formData.append("discount", String(values.discount));
+      formData.append("custom_product_id", customProductId);
+      formData.append("variant_id", variantId);
+      !isEditMode &&
+        formData.append("is_main_product", isVariantMode ? "false" : "true");
 
       const response = await method(endpoint, formData, {
         withAuth: true,
@@ -313,7 +392,57 @@ const CreateUpdateProductPage = () => {
 
   useEffect(() => {
     fetchAllBrand();
+    fetchAllSizeData();
   }, []);
+
+  const handleSizeQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setSizeQuantity((prev) => ({ ...prev, [name]: value }));
+    console.log(sizeQuantity);
+    setIsSizeQuantityAdded(false);
+  };
+
+  const handleAddSizeQuantityData = async () => {
+    console.log("add size quantity data");
+
+    const sizeQuantityData = size
+      .filter((item) => item.name === sizeType)
+      .map((item) => "quantity==" + item.id + "==" + item.size);
+
+    for (const item of sizeQuantityData) {
+      if (!sizeQuantity[item]) {
+        setIsSizeQuantityAdded(true);
+        return; // This will exit handleAddSizeQuantityData
+      }
+    }
+
+    setIsSizeQuantityAdded(false);
+
+    try {
+      const response = await apiService.post(
+        "/size-quantity",
+        Object.keys(sizeQuantity).map((item) => ({
+          quantity: Number(sizeQuantity[item.toString()]),
+          size_id: Number(item.split("==")[1]),
+          custom_product_id: customProductId,
+        })),
+        {
+          withAuth: true,
+        },
+      );
+
+      if (response.status === 200) {
+        toast.success("Size quantity data added successfully");
+        setIsSizeAdded(true);
+      }
+    } catch (error: any) {
+      console.log("Error:", error?.message || error);
+      const msg =
+        error.response?.data?.message ||
+        "Something went wrong. Please try again later.";
+      toast.error(msg);
+    }
+  };
 
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
     formik;
@@ -323,10 +452,34 @@ const CreateUpdateProductPage = () => {
       <CentralLoader loading={loadingStates.productLoading} />
       <Layout>
         <h2 className="mb-6 text-[26px] font-bold leading-[30px] text-dark dark:text-white">
-          {isEditMode ? "Edit" : "Create"} Product
+          {isVariantMode ? "Add Variant" : isEditMode ? "Edit" : "Create"}{" "}
+          Product
         </h2>
         <div className="rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">
           <div className="w-full p-4">
+            {mainProduct.length > 0 && (
+              <>
+                <h2 className="mb-4 text-lg font-bold">
+                  Current Product Variants{" "}
+                  {mainProduct.length > 0 && `(${mainProduct.length})`}
+                </h2>
+                <div className="flex gap-2">
+                  {mainProduct.map((item, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        className="h-14 w-14 rounded-md object-cover"
+                        src={item.image[0]}
+                        alt={item.name}
+                      />
+
+                      <div>{item.name}</div>
+                    </div>
+                  ))}
+                </div>
+                <hr className="my-4" />
+              </>
+            )}
+
             <form onSubmit={formik.handleSubmit} noValidate>
               <InputGroup
                 className="mb-5 w-full sm:w-9/12 md:w-1/2"
@@ -346,6 +499,7 @@ const CreateUpdateProductPage = () => {
                 className="mb-5 w-full sm:w-9/12 md:w-1/2"
                 name="categoryId"
                 value={values.categoryId}
+                disabled={isVariantMode}
                 placeholder="Select category"
                 required
                 items={categories.map((c) => ({
@@ -371,6 +525,7 @@ const CreateUpdateProductPage = () => {
                 className="mb-5 w-full sm:w-9/12 md:w-1/2"
                 name="subCategoryId"
                 value={values.subCategoryId}
+                disabled={isVariantMode}
                 placeholder="Select subcategory"
                 required
                 items={subCategories.map((c) => ({
@@ -397,6 +552,7 @@ const CreateUpdateProductPage = () => {
                 className="mb-5 w-full sm:w-9/12 md:w-1/2"
                 name="subCategoryTypeId"
                 value={values.subCategoryTypeId}
+                disabled={isVariantMode}
                 placeholder="Select subcategory type"
                 required
                 items={subCategoriesType.map((c) => ({
@@ -416,6 +572,7 @@ const CreateUpdateProductPage = () => {
                 className="mb-5 w-full sm:w-9/12 md:w-1/2"
                 name="brandId"
                 value={values.brandId}
+                disabled={isVariantMode}
                 placeholder="Select brand"
                 required
                 items={brands.map((c) => ({
@@ -440,23 +597,7 @@ const CreateUpdateProductPage = () => {
                 min={0}
                 error={touched.price && errors.price ? errors.price : ""}
               />
-              <InputGroup
-                className="mb-5 w-full sm:w-9/12 md:w-1/2"
-                type="number"
-                name="quantity"
-                label="Quantity"
-                placeholder="Enter quantity"
-                required
-                value={values.quantity}
-                handleChange={handleChange}
-                handleBlur={handleBlur}
-                height="sm"
-                min={0}
-                max={99}
-                error={
-                  touched.quantity && errors.quantity ? errors.quantity : ""
-                }
-              />
+
               <InputGroup
                 className="mb-5 w-full sm:w-9/12 md:w-1/2"
                 type="number"
@@ -475,6 +616,78 @@ const CreateUpdateProductPage = () => {
                   touched.discount && errors.discount ? errors.discount : ""
                 }
               />
+
+              <Select
+                label="Size"
+                className="mb-5 w-full sm:w-9/12 md:w-1/2"
+                name="size"
+                value={values.size}
+                placeholder="Select size"
+                disabled={isVariantMode}
+                required
+                items={Array.from(
+                  new Map(size.map((item) => [item.name, item])).values(),
+                ).map((item) => ({
+                  label: item.name,
+                  value: item.name,
+                }))}
+                onChange={(e) => {
+                  handleChange(e);
+                  setSizeType(e.target.value);
+                  setSizeQuantity({});
+                }}
+                onBluer={handleBlur}
+                error={touched.size && errors.size ? errors.size : ""}
+              />
+
+              <div>
+                {size.map((item) =>
+                  item.name === sizeType ? (
+                    <div className="mb-1 grid grid-cols-2 gap-2">
+                      <div className="grid w-full grid-cols-5 gap-2">
+                        <div
+                          key={item.id}
+                          className="col-span-1 flex h-10 min-w-10 items-center justify-center rounded-full border p-2 text-center text-sm font-medium"
+                        >
+                          {item.size}
+                        </div>
+                        <div className="col-span-3">
+                          <input
+                            type="text"
+                            placeholder="Enter quantity"
+                            className="w-full rounded-md border border-gray-300 p-2"
+                            name={`quantity==${item.id}==${item.size}`}
+                            value={
+                              sizeQuantity[`quantity==${item.id}==${item.size}`]
+                            }
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (/^\d*$/.test(value)) {
+                                handleSizeQuantityChange(e);
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : null,
+                )}
+                {isSizeQuantityAdded && (
+                  <div className="text-red-500">
+                    Please add size quantity data in all the fields
+                  </div>
+                )}
+                {size.length > 0 && sizeType && (
+                  <button
+                    type="button"
+                    className={`rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90`}
+                    onClick={handleAddSizeQuantityData}
+                  >
+                    Add Size
+                  </button>
+                )}
+              </div>
+
               <ImageUpload
                 className="mb-5 w-full sm:w-9/12 md:w-1/2"
                 name="images"
@@ -513,8 +726,18 @@ const CreateUpdateProductPage = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={loadingStates.formSubmitting}
-                  className="rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90"
+                  disabled={
+                    loadingStates.formSubmitting || isEditMode
+                      ? false
+                      : !isSizeAdded
+                  }
+                  className={`rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90 ${
+                    isEditMode
+                      ? "cursor-pointer"
+                      : !isSizeAdded
+                        ? "cursor-not-allowed opacity-50"
+                        : "cursor-pointer"
+                  }`}
                 >
                   Save <SmallLoader loading={loadingStates.formSubmitting} />
                 </button>
