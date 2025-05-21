@@ -1,16 +1,46 @@
 "use client";
 import React, { Suspense, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import NextTopLoader from "nextjs-toploader";
-import { useDispatch } from "react-redux";
 import { CentralLoader, SmallLoader } from "@/components/Loader";
 import { ReviewMagnifierIcon } from "@/assets/icons";
+import apiService from "@/services/base.services";
+import { toast } from "react-toastify";
 
 const CheckAdminActivate = () => {
   const router = useRouter();
-  const dispatch = useDispatch();
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email");
 
   const [loading, setLoading] = useState(false);
+
+  const checkActivationStatus = async () => {
+    setLoading(true);
+    try {
+      const response: {
+        data: {
+          message: string;
+          role: string;
+          is_approved: boolean;
+        };
+        status: number;
+      } = await apiService.get(`admin-register/${email}`);
+      if (response.status === 200 && response.data.is_approved) {
+        toast.success("Congratulations, your account is activated");
+        router.push("/");
+      }else{
+        toast.info("Your account is not activated yet, please wait for approval");
+      }
+    } catch (error: any) {
+      if (error.response?.status === 404 || error.response?.status === 400) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Something went wrong, please try again later.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex h-fit min-h-screen w-full items-center justify-center">
@@ -31,6 +61,7 @@ const CheckAdminActivate = () => {
 
           <button
             disabled={loading}
+            onClick={() => checkActivationStatus()}
             className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg bg-primary p-[13px] font-medium text-white hover:bg-opacity-90"
           >
             Check Status <SmallLoader loading={loading} />

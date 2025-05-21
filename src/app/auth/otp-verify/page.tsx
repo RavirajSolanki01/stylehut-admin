@@ -10,7 +10,7 @@ import NextTopLoader from "nextjs-toploader";
 import apiService from "@/services/base.services";
 import { SmallLoader, CentralLoader } from "@/components/Loader";
 import { useDispatch } from "react-redux";
-import { addAuthToken } from "@/store/slice/auth.slice";
+import { addAuthToken, addUserRole } from "@/store/slice/auth.slice";
 
 //@ts-expect-error
 const OTPInput = dynamic(() => import("otp-input-react"), {
@@ -56,6 +56,8 @@ const OtpVerify = () => {
       const response: {
         data: {
           token: string;
+          isNewUser: boolean;
+          role: string;
         };
         status: number;
       } = await apiService.post("/admin-verify-otp", {
@@ -64,8 +66,14 @@ const OtpVerify = () => {
       });
       if (response.status === 200) {
         toast.success("Email verification successful");
-        dispatch(addAuthToken({ token: response.data.token }));
-        router.push("/");
+        dispatch(addUserRole({ role: response.data.role }));
+
+        if (!response.data.isNewUser && response.data.token) {
+          dispatch(addAuthToken({ token: response.data.token }));
+          router.push("/");
+        }else{
+          router.push(`/auth/admin-activate-info?email=${email}`);
+        }
       }
     } catch (error: any) {
       if (error.response?.status === 404 || error.response?.status === 400) {

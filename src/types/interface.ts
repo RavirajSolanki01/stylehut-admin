@@ -107,6 +107,14 @@ export interface IGetAllSubCategoriesType {
 }
 
 export interface IProduct {
+  size_quantities: {
+    quantity: number;
+    size_data: {
+      name: string;
+      id: number;
+      size: string;
+    };
+  }[];
   id: number;
   name: string;
   description: string;
@@ -125,6 +133,8 @@ export interface IProduct {
   sub_category: ISubCategory;
   sub_category_type: ISubCategoryType;
   brand: IBrand;
+  variant_id: string;
+  relatedProducts: IProduct[];
 }
 
 export interface IProductApiResponse {
@@ -170,6 +180,7 @@ export interface IUser {
   is_deleted: boolean;
   role: IRole;
   gender: IUserGender;
+  is_approved: boolean;
   is_active? : boolean
 }
 export interface IUserApiResponse {
@@ -231,4 +242,15 @@ export interface ICouponApiResponse {
       };
     };
   };
+}
+
+export interface ISize {
+  id: number;
+  name: string;
+  size: string;
+}
+
+export interface ISizeApiResponse {
+  data: ISize[];
+  status: number;
 }

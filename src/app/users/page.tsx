@@ -12,6 +12,8 @@ import { IUser, IUserApiResponse } from "@/types/interface";
 import { DEFAULT_PAGINATION } from "@/utils/common";
 import useDebounce from "@/hooks/useDebounce";
 import { CentralLoader } from "@/components/Loader";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 
 type ColumnConfig<T> = {
   key: keyof T;
@@ -23,13 +25,13 @@ type ColumnConfig<T> = {
 const UsersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const auth = useSelector((state: RootState) => state.auth);
 
   const [user, setUser] = useState<IUser[]>([]);
   const [pagination, setPagination] = useState(DEFAULT_PAGINATION);
   const [sortKey, setSortKey] = useState<keyof IUser | "">("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isActive, setIsActive] = useState<boolean>(false);
 
   const fetchCategories = useCallback(
     async (sortKey = "", sortOrder = "") => {
@@ -74,6 +76,31 @@ const UsersPage = () => {
     setPagination((prev) => ({ ...prev, page }));
   };
 
+  const handleActivateUser = async (row: IUser) => {
+    try {
+      setIsLoading(true);
+      const response: {
+        data: {
+          message: string;
+        };
+        status: number;
+      } = await apiService.put(
+        "/user/approve",
+        { userId: row?.id },
+        { withAuth: true },
+      );
+      const data = response.data;
+      if (data) {
+        toast.success(data.message);
+        fetchCategories(sortKey, sortOrder);
+      }
+    } catch (error) {
+      console.error("Error saving privacy policy:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const columns: ColumnConfig<IUser>[] = [
     {
       key: "first_name",
@@ -98,7 +125,7 @@ const UsersPage = () => {
       key: "gender",
       label: "Gender",
       sortable: true,
-      render: (_value, row) => row.role?.name ?? "-",
+      render: (_value, row) => row?.gender?.name ?? "-",
     },
     {
       key: "birth_date",
@@ -142,27 +169,27 @@ const UsersPage = () => {
     },
   ];
 
-  const isSuperAdmin = "" //user role should be here
+  const isSuperAdmin = auth.role === "SuperAdmin";
   if (isSuperAdmin) {
     columns.push({
       key: "is_active",
       label: "Action",
       sortable: false,
       render: (_value, row) => {
-        // const isActive = row.is_active;
+        const isActive = row.is_approved;
+        if (row.role.name === "User" || row.role.name === "SuperAdmin")
+          return null;
         return (
           <div className="group relative inline-block">
             <button
-              onClick={() => {
-                setIsActive(!isActive);
-              }}
-              className={`flex items-center gap-2 rounded px-3 py-1 text-sm font-medium text-white transition-colors ${isActive ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"} `}
+              onClick={() => handleActivateUser(row)}
+              className={`flex items-center gap-2 rounded px-3 py-1 text-sm font-medium text-white transition-colors ${!isActive ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"}`}
             >
               <RiLoopRightLine />
             </button>
 
             <div className="absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 scale-0 transform rounded bg-gray-500 px-2 py-1 text-xs text-white opacity-0 transition-all group-hover:scale-100 group-hover:opacity-100">
-              {isActive ? "Activate" : "Deactivate"}
+              {!isActive ? "Activate" : "Deactivate"}
             </div>
           </div>
         );
