@@ -641,9 +641,9 @@ const CreateUpdateProductPage = () => {
               />
 
               <div>
-                {size.map((item) =>
+                {size.map((item, index) =>
                   item.name === sizeType ? (
-                    <div className="mb-1 grid grid-cols-2 gap-2">
+                    <div key={index} className="mb-1 grid grid-cols-2 gap-2">
                       <div className="grid w-full grid-cols-5 gap-2">
                         <div
                           key={item.id}
