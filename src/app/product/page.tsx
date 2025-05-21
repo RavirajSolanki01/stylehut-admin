@@ -109,6 +109,8 @@ const ProductPage = () => {
 
   const handleEdit = (id: number) => router.push(`/product/${id}`);
 
+  const handleAddVariant = (id: number) => router.push(`/product/new_variant=${id}`);
+
   const openDeleteConfirmation = (id: number) => {
     setCategoryTypeId(id);
     setIsDialogOpen(true);
@@ -226,6 +228,12 @@ const ProductPage = () => {
             ]}
             actions={(row) => (
               <div className="flex items-center justify-end gap-x-3">
+                <button
+                  className="hover:text-primary"
+                  onClick={() => handleAddVariant(row.id)}
+                >
+                  <Plus />
+                </button>
                 <button
                   className="hover:text-primary"
                   onClick={() => handleEdit(row.id)}
