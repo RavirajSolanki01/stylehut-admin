@@ -108,6 +108,7 @@ export interface IGetAllSubCategoriesType {
 
 export interface IProduct {
   size_quantities: {
+    id: number;
     quantity: number;
     size_data: {
       name: string;
@@ -135,6 +136,7 @@ export interface IProduct {
   brand: IBrand;
   variant_id: string;
   relatedProducts: IProduct[];
+  custom_product_id: string;
 }
 
 export interface IProductApiResponse {
