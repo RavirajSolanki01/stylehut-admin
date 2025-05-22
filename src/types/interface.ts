@@ -181,7 +181,7 @@ export interface IUser {
   role: IRole;
   gender: IUserGender;
   is_approved: boolean;
-  is_active? : boolean
+  is_active?: boolean;
 }
 export interface IUserApiResponse {
   data: { data: { items: IUser[]; meta: IPaginationData } };
@@ -253,4 +253,17 @@ export interface ISize {
 export interface ISizeApiResponse {
   data: ISize[];
   status: number;
+}
+
+// -------------------------------------wishlist------------------------------------------
+
+export interface IWishlistTableAttr {
+  id: number;
+  userEmail: string;
+  name: string;
+  productImage: string[];
+  brand: string;
+  category: string;
+  sub_category: string;
+  sub_category_type: string;
 }

@@ -59,6 +59,12 @@ export const NAV_DATA = [
         items: [],
       },
       {
+        title: "Wishlist",
+        url: "/wishlist",
+        icon: Icons.WishListIcon,
+        items: [],
+      },
+      {
         title: "Terms & Conditions",
         url: "/terms",
         icon: Icons.TermsIcon,
