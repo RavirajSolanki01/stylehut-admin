@@ -228,19 +228,19 @@ const ProductPage = () => {
             ]}
             actions={(row) => (
               <div className="flex items-center justify-end gap-x-3">
-                <button
+                <button title="plus"
                   className="hover:text-primary"
                   onClick={() => handleAddVariant(row.id)}
                 >
                   <Plus />
                 </button>
-                <button
+                <button title="edit"
                   className="hover:text-primary"
                   onClick={() => handleEdit(row.id)}
                 >
                   <EditIcon />
                 </button>
-                <button
+                <button title="delete"
                   className="hover:text-primary"
                   onClick={() => openDeleteConfirmation(row.id)}
                 >
