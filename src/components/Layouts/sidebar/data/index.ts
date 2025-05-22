@@ -35,6 +35,12 @@ export const NAV_DATA = [
         items: [],
       },
       {
+        title: "Cart Added Products",
+        icon: Icons.CartIcon,
+        url: "/cart-added-items",
+        items: [],
+      },
+      {
         title: "Gender",
         url: "/gender",
         icon: Icons.GenderIcon,
