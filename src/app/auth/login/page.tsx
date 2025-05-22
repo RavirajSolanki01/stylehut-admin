@@ -16,8 +16,12 @@ const Login = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) router.back();
+    const currentPath = window.location.pathname;
+    if (token && currentPath !== "/auth/check-admin-activate") {
+      router.back();
+    }
   }, []);
+  
 
   const formik = useFormik({
     initialValues: {
