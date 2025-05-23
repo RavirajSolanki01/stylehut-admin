@@ -108,6 +108,7 @@ export interface IGetAllSubCategoriesType {
 
 export interface IProduct {
   size_quantities: {
+    id: number;
     quantity: number;
     size_data: {
       name: string;
@@ -135,6 +136,7 @@ export interface IProduct {
   brand: IBrand;
   variant_id: string;
   relatedProducts: IProduct[];
+  custom_product_id: string;
 }
 
 export interface IProductApiResponse {
@@ -257,13 +259,46 @@ export interface ISizeApiResponse {
 
 // -------------------------------------wishlist------------------------------------------
 
+interface IWishlistUser {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: {
+    id: number;
+    name: string;
+  };
+}
+export interface IWishlist {
+  product: {
+    id: number;
+    name: string;
+    price: string;
+    discount: number;
+    image: string[];
+    category: ICategory;
+    sub_category: ISubCategory;
+    sub_category_type: ISubCategoryType;
+    brand: IBrand;
+  };
+  unique_users_count: number;
+  users: IWishlistUser[];
+}
+
+export interface IWishlistResponse {
+  data: { data: { items: IWishlist[]; meta: IPaginationData } };
+  status: number;
+}
+
 export interface IWishlistTableAttr {
   id: number;
-  userEmail: string;
   name: string;
   productImage: string[];
+  price: string;
+  discount: number;
   brand: string;
   category: string;
   sub_category: string;
   sub_category_type: string;
+  users: number;
 }
