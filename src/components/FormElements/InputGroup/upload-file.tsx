@@ -175,9 +175,11 @@ export const ImageUpload = ({
         )}
       </div>
 
-      <p className="text-xs text-gray-500">
-        {images.length}/{maxImages} images (max {maxSizeMB}MB each)
-      </p>
+      {maxImages > 1 && (
+        <p className="text-xs text-gray-500">
+          {images.length}/{maxImages} images (max {maxSizeMB}MB each)
+        </p>
+      )}
 
       {touched && error && <p className="text-sm text-red-500">{error}</p>}
     </div>

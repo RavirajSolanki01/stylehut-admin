@@ -46,3 +46,41 @@ export const fileValidation = Yup.mixed()
     const file = value as File;
     return file && file.size <= 5 * 1024 * 1024;
   });
+
+export const shopByCategoryValidation = Yup.object({
+  name: Yup.string()
+    .trim()
+    .required("Name is required")
+    .max(40, "Name must be 40 characters or less")
+    .min(2, "Name must be at least 2 characters"),
+
+  sub_category_id: Yup.string().trim().required("Please select a subcategory"),
+
+  image: Yup.array()
+    .of(
+      Yup.mixed().test(
+        "customValidation",
+        "Only JPG, JPEG, PNG allowed",
+        function (value) {
+          if (typeof value === "string") return true;
+          return fileValidation.isValidSync(value);
+        },
+      ),
+    )
+    .min(1, "Image is required")
+    .required("Image is required"),
+
+  maxDiscount: Yup.string()
+    .required("Max discount is required")
+    .test(
+      "greater-than-min",
+      "Max discount must be greater than Min discount",
+      function (value) {
+        const { minDiscount } = this.parent;
+        const max = parseFloat(value);
+        const min = parseFloat(minDiscount);
+        if (isNaN(max) || isNaN(min)) return true;
+        return !isNaN(max) && !isNaN(min) && max > min;
+      },
+    ),
+});
