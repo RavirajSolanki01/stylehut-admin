@@ -304,3 +304,45 @@ export interface IWishlistTableAttr {
   sub_category_type: string;
   users: number;
 }
+
+// ----------------------------------Shop By Category--------------------------------
+
+export interface ICardStyleResponse {
+  data: {
+    status: number;
+    data: {
+      id: number;
+      cardColor: string;
+      fontColor: string;
+      updatedAt: string;
+    };
+  };
+}
+
+export interface IShopByCategory {
+  id: number;
+  name: string;
+  image: string;
+  user_id: number;
+  minDiscount: number;
+  maxDiscount: number;
+  sub_category_id: number;
+  create_at: string;
+  updated_at: string;
+  sub_category: ISubCategory;
+}
+
+export interface IShopByCategoryResponse {
+  data: { data: { items: IShopByCategory[]; meta: IPaginationData } };
+  status: number;
+}
+
+export interface IShopByCategoryIdResponse {
+  data: { data: IShopByCategory; meta: IPaginationData };
+  status: number;
+}
+
+export interface IGetAllSubCategoriesResponse {
+  data: { data: ISubCategory[] };
+  status: number;
+}
