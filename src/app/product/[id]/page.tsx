@@ -24,6 +24,8 @@ import {
 } from "@/types/interface";
 import { ImageUpload } from "@/components/FormElements/InputGroup/upload-file";
 import { fileValidation } from "@/utils/schema";
+import { shouldEnableButton } from "@/utils/button-toggler";
+import { getMaxKeyValue } from "@/utils/common";
 
 type FormValues = {
   name: string;
@@ -58,12 +60,6 @@ const CreateUpdateProductPage = () => {
   const { id } = useParams();
   const isEditMode = id !== "new";
   const isVariantMode = (id as string)?.startsWith("new_variant");
-  console.log(
-    decodeURIComponent(id as string),
-    ">><< id",
-    isVariantMode,
-    ">><< isVariantMode",
-  );
 
   const [{ customProductId, variantId }, setCustomProductVariantId] = useState({
     customProductId: uuidv4(),
@@ -82,7 +78,19 @@ const CreateUpdateProductPage = () => {
   const [sizeQuantity, setSizeQuantity] = useState<{
     [key: string]: string;
   }>({});
+  const [priceOfSize, setPriceOfSize] = useState<{ [key: string]: string }>({});
+  const [discountOfSize, setDiscountOfSize] = useState<{
+    [key: string]: string;
+  }>({});
+  const [anotherSizeQuantity, setAnotherSizeQuantity] = useState<{
+    [key: string]: string;
+  }>({});
   const [sizeType, setSizeType] = useState<string>("");
+  const [currentProductData, setCurrentProductData] = useState<{
+    custom_product_id: string;
+    variant_id: string;
+  }>({ custom_product_id: "", variant_id: "" });
+  const [resSizeType, setResSizeType] = useState<string>("");
   const [isSizeAdded, setIsSizeAdded] = useState<boolean>(false);
   const [isSizeQuantityAdded, setIsSizeQuantityAdded] =
     useState<boolean>(false);
@@ -93,6 +101,10 @@ const CreateUpdateProductPage = () => {
     productLoading: false,
     formSubmitting: false,
   });
+
+  const [isSizeChanged, setIsSizeChanged] = useState(false);
+  const [enabled, setEnabled] = useState(false);
+  const [_, setHasPrice] = useState(false);
 
   const formik = useFormik<FormValues>({
     initialValues: initialFormValues,
@@ -234,6 +246,7 @@ const CreateUpdateProductPage = () => {
     }
   }, []);
 
+  // Fetch product data
   const fetchSubCategoryDetails = useCallback(async () => {
     try {
       const response: { data: { data: IProduct }; status: number } =
@@ -259,16 +272,60 @@ const CreateUpdateProductPage = () => {
           image,
           relatedProducts,
           size_quantities,
+          variant_id,
+          custom_product_id,
         } = response.data.data;
-        setMainProduct(relatedProducts);
+        setCurrentProductData({
+          custom_product_id: custom_product_id,
+          variant_id: variant_id,
+        });
+
+        if (isEditMode && !isVariantMode) {
+          setMainProduct([...relatedProducts]);
+        } else if (isEditMode && isVariantMode) {
+          setMainProduct([...relatedProducts, response.data.data]);
+        }
+        setHasPrice(!!size_quantities.find((item) => item.price > 0)?.price);
+        setEnabled(!!size_quantities.find((item) => item.price > 0)?.price);
+
         const customObject = size_quantities.reduce((acc, item) => {
           const sizeId = item.size_data.id;
           const sizeLabel = item.size_data.size;
           const key = `quantity==${sizeId}==${sizeLabel}`;
-          acc[key] = item.quantity;
+          acc[key] = isVariantMode ? 0 : item.quantity;
           return acc;
         }, {} as any);
+
+        const priceObject = size_quantities.reduce((acc, item) => {
+          const sizeId = item.size_data.id;
+          const sizeLabel = item.size_data.size;
+          const key = `price==${sizeId}==${sizeLabel}`;
+          acc[key] = isVariantMode ? 0 : item.price;
+          return acc;
+        }, {} as any);
+
+        const discountObject = size_quantities.reduce((acc, item) => {
+          const sizeId = item.size_data.id;
+          const sizeLabel = item.size_data.size;
+          const key = `discount==${sizeId}==${sizeLabel}`;
+          acc[key] = isVariantMode ? 0 : item.discount;
+          return acc;
+        }, {} as any);
+
+        const anotherCustomObject = size_quantities.reduce((acc, item) => {
+          const id = item.id;
+          const sizeId = item.size_data.id;
+          const sizeLabel = item.size_data.size;
+          const key = `quantity==${sizeId}==${sizeLabel}==${id}`;
+          acc[key] = isVariantMode ? 0 : item.quantity;
+          return acc;
+        }, {} as any);
+
+
         setSizeQuantity(customObject);
+        setPriceOfSize(priceObject);
+        setDiscountOfSize(discountObject);
+        setAnotherSizeQuantity(anotherCustomObject);
         setCustomProductVariantId((pre) => ({
           ...pre,
           variantId: response.data.data.variant_id,
@@ -276,9 +333,12 @@ const CreateUpdateProductPage = () => {
         setSizeType(
           response.data.data?.size_quantities[0]?.size_data?.name as string,
         );
+        setResSizeType(
+          response.data.data?.size_quantities[0]?.size_data?.name as string,
+        );
 
         formik.setValues({
-          name,
+          name: isVariantMode ? "" : name,
           description: isVariantMode ? "" : description,
           categoryId: String(category.id),
           subCategoryId: String(sub_category.id),
@@ -395,13 +455,51 @@ const CreateUpdateProductPage = () => {
     fetchAllSizeData();
   }, []);
 
+  useEffect(() => {
+    // const maxPrice = Math.max(...Object.values(priceOfSize).map(Number))
+    const result = getMaxKeyValue(priceOfSize);
+
+    setFieldValue("price", result?.value);
+
+    setFieldValue(
+      "discount",
+      result?.key
+        ? discountOfSize["discount==" + result?.key.split("price==")[1]]
+        : 0,
+    );
+
+  }, [priceOfSize, discountOfSize]);
+
   const handleSizeQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setSizeQuantity((prev) => ({ ...prev, [name]: value }));
-    console.log(sizeQuantity);
+    setIsSizeChanged(true);
     setIsSizeQuantityAdded(false);
   };
 
+  const handlePriceOfSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPriceOfSize((prev) => ({ ...prev, [name]: value }));
+    setIsSizeChanged(true);
+    console.log(priceOfSize, ">><< priceOfSize");
+  };
+
+  const handleDiscountOfSizeChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const { name, value } = e.target;
+    setDiscountOfSize((prev) => ({ ...prev, [name]: value }));
+    setIsSizeChanged(true);
+    console.log(discountOfSize, ">><< discountOfSizeZie");
+  };
+
+  const handleSizePrice = () => {
+    setEnabled(!enabled);
+    setPriceOfSize({});
+    setDiscountOfSize({});
+  };
+
+  // Add size  / Save size button
   const handleAddSizeQuantityData = async () => {
     console.log("add size quantity data");
 
@@ -419,24 +517,74 @@ const CreateUpdateProductPage = () => {
     setIsSizeQuantityAdded(false);
 
     try {
-      const response = await apiService.post(
-        "/size-quantity",
+      let payload: any[] = [];
+      let url = "/size-quantity";
+      const buildPostPayload = (customProductId: string) =>
         Object.keys(sizeQuantity).map((item) => ({
-          quantity: Number(sizeQuantity[item.toString()]),
+          quantity: Number(sizeQuantity[item]),
           size_id: Number(item.split("==")[1]),
           custom_product_id: customProductId,
-        })),
-        {
-          withAuth: true,
-        },
+          price:
+            Object.keys(priceOfSize).length > 0
+              ? Number(priceOfSize["price" + item.split("quantity")[1]])
+              : 0,
+          discount:
+            Object.keys(discountOfSize).length > 0
+              ? Number(discountOfSize["discount" + item.split("quantity")[1]])
+              : 0,
+        }));
+
+      const buildPatchPayload = () =>
+        Object.keys(anotherSizeQuantity).map((item) => ({
+          quantity: Number(
+            sizeQuantity[item.split("==").slice(0, -1).join("==")],
+          ),
+          size_id: Number(item.split("==")[1]),
+          custom_product_id: currentProductData.custom_product_id,
+          id: Number(item.split("==")[3]),
+          price: Number(priceOfSize['price==' + item.split("==").slice(1, -1).join("==")]),
+          discount: Number(discountOfSize['discount==' + item.split("==").slice(1, -1).join("==")])
+        }));
+
+      console.log(
+        "anotherSizeQuantity=>",
+        anotherSizeQuantity,
+        "priceOfSize=>",
+        priceOfSize,
+        "discountOfSize=>",
+        discountOfSize,
       );
 
-      if (response.status === 200) {
-        toast.success("Size quantity data added successfully");
+      let response;
+
+      if (isEditMode) {
+        if (isVariantMode) {
+          payload = buildPostPayload(customProductId);
+          response = await apiService.post(url, payload, { withAuth: true });
+        } else if (resSizeType === sizeType) {
+          payload = buildPatchPayload();
+          response = await apiService.patch(url, payload, { withAuth: true });
+        } else {
+          // DELETE first, then POST
+          await apiService.delete(
+            `${url}?custom_product_id=${currentProductData.custom_product_id}`,
+            { withAuth: true },
+          );
+
+          payload = buildPostPayload(currentProductData.custom_product_id);
+          response = await apiService.post(url, payload, { withAuth: true });
+        }
+      } else {
+        payload = buildPostPayload(customProductId);
+        response = await apiService.post(url, payload, { withAuth: true });
+      }
+
+      if (response?.status === 200) {
+        toast.success("Size quantity data saved successfully");
         setIsSizeAdded(true);
       }
     } catch (error: any) {
-      console.log("Error:", error?.message || error);
+      console.error("Error:", error?.message || error);
       const msg =
         error.response?.data?.message ||
         "Something went wrong. Please try again later.";
@@ -446,6 +594,10 @@ const CreateUpdateProductPage = () => {
 
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
     formik;
+
+  const isFieldDisabled = isVariantMode
+    ? isVariantMode
+    : mainProduct.length > 0;
 
   return (
     <>
@@ -457,7 +609,7 @@ const CreateUpdateProductPage = () => {
         </h2>
         <div className="rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">
           <div className="w-full p-4">
-            {mainProduct.length > 0 && (
+            {isEditMode && mainProduct.length > 0 && (
               <>
                 <h2 className="mb-4 text-lg font-bold">
                   Current Product Variants{" "}
@@ -481,6 +633,12 @@ const CreateUpdateProductPage = () => {
             )}
 
             <form onSubmit={formik.handleSubmit} noValidate>
+              {isEditMode && !isVariantMode && mainProduct?.length > 0 && (
+                <div className="-mt-4 mb-4 text-xs">
+                  NOTE: You will not be able to change types if product has
+                  variants
+                </div>
+              )}
               <InputGroup
                 className="mb-5 w-full sm:w-9/12 md:w-1/2"
                 type="text"
@@ -499,7 +657,7 @@ const CreateUpdateProductPage = () => {
                 className="mb-5 w-full sm:w-9/12 md:w-1/2"
                 name="categoryId"
                 value={values.categoryId}
-                disabled={isVariantMode}
+                disabled={isFieldDisabled}
                 placeholder="Select category"
                 required
                 items={categories.map((c) => ({
@@ -525,7 +683,7 @@ const CreateUpdateProductPage = () => {
                 className="mb-5 w-full sm:w-9/12 md:w-1/2"
                 name="subCategoryId"
                 value={values.subCategoryId}
-                disabled={isVariantMode}
+                disabled={isFieldDisabled}
                 placeholder="Select subcategory"
                 required
                 items={subCategories.map((c) => ({
@@ -552,7 +710,7 @@ const CreateUpdateProductPage = () => {
                 className="mb-5 w-full sm:w-9/12 md:w-1/2"
                 name="subCategoryTypeId"
                 value={values.subCategoryTypeId}
-                disabled={isVariantMode}
+                disabled={isFieldDisabled}
                 placeholder="Select subcategory type"
                 required
                 items={subCategoriesType.map((c) => ({
@@ -572,7 +730,7 @@ const CreateUpdateProductPage = () => {
                 className="mb-5 w-full sm:w-9/12 md:w-1/2"
                 name="brandId"
                 value={values.brandId}
-                disabled={isVariantMode}
+                disabled={isFieldDisabled}
                 placeholder="Select brand"
                 required
                 items={brands.map((c) => ({
@@ -588,6 +746,7 @@ const CreateUpdateProductPage = () => {
                 type="number"
                 name="price"
                 label="Price"
+                disabled={enabled}
                 placeholder="Enter price"
                 required
                 value={values.price}
@@ -603,6 +762,7 @@ const CreateUpdateProductPage = () => {
                 type="number"
                 name="discount"
                 label="Discount"
+                disabled={enabled}
                 placeholder="Enter discount"
                 required
                 value={values.discount}
@@ -619,11 +779,11 @@ const CreateUpdateProductPage = () => {
 
               <Select
                 label="Size"
-                className="mb-5 w-full sm:w-9/12 md:w-1/2"
+                className="mb-3 w-full sm:w-9/12 md:w-1/2"
                 name="size"
                 value={values.size}
                 placeholder="Select size"
-                disabled={isVariantMode}
+                disabled={isFieldDisabled}
                 required
                 items={Array.from(
                   new Map(size.map((item) => [item.name, item])).values(),
@@ -635,11 +795,30 @@ const CreateUpdateProductPage = () => {
                   handleChange(e);
                   setSizeType(e.target.value);
                   setSizeQuantity({});
+                  setPriceOfSize({});
                 }}
                 onBluer={handleBlur}
                 error={touched.size && errors.size ? errors.size : ""}
               />
-
+              {sizeType !== "" && (
+                <div className="mb-2 flex items-center gap-2">
+                  <button
+                    title="has quantity"
+                    onClick={() => handleSizePrice()}
+                    type="button"
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${
+                      enabled ? "bg-primary" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${
+                        enabled ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>{" "}
+                  <span>Dynamic Pricing</span>
+                </div>
+              )}
               <div>
                 {size.map((item, index) =>
                   item.name === sizeType ? (
@@ -651,7 +830,7 @@ const CreateUpdateProductPage = () => {
                         >
                           {item.size}
                         </div>
-                        <div className="col-span-3">
+                        <div className="col-span-3 flex gap-2">
                           <input
                             type="text"
                             placeholder="Enter quantity"
@@ -667,6 +846,42 @@ const CreateUpdateProductPage = () => {
                               }
                             }}
                           />
+                          {enabled && (
+                            <input
+                              type="text"
+                              placeholder="Enter Price"
+                              className="w-full rounded-md border border-gray-300 p-2"
+                              name={`price==${item.id}==${item.size}`}
+                              value={
+                                priceOfSize[`price==${item.id}==${item.size}`]
+                              }
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^\d*$/.test(value)) {
+                                  handlePriceOfSizeChange(e);
+                                }
+                              }}
+                            />
+                          )}
+                          {enabled && (
+                            <input
+                              type="text"
+                              placeholder="Enter Discount"
+                              className="w-full rounded-md border border-gray-300 p-2"
+                              name={`discount==${item.id}==${item.size}`}
+                              value={
+                                discountOfSize[
+                                  `discount==${item.id}==${item.size}`
+                                ]
+                              }
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^\d*$/.test(value)) {
+                                }
+                                handleDiscountOfSizeChange(e);
+                              }}
+                            />
+                          )}
                         </div>
                       </div>
                     </div>
@@ -680,10 +895,11 @@ const CreateUpdateProductPage = () => {
                 {size.length > 0 && sizeType && (
                   <button
                     type="button"
-                    className={`rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90`}
+                    className={`${isEditMode ? (isSizeChanged ? "" : "cursor-not-allowed opacity-50") : ""} rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90`}
                     onClick={handleAddSizeQuantityData}
+                    disabled={isEditMode ? !isSizeChanged : false}
                   >
-                    Add Size
+                    {isEditMode ? "Save " : "Add "} size
                   </button>
                 )}
               </div>
@@ -727,9 +943,12 @@ const CreateUpdateProductPage = () => {
                 <button
                   type="submit"
                   disabled={
-                    loadingStates.formSubmitting || isEditMode
-                      ? false
-                      : !isSizeAdded
+                    loadingStates.formSubmitting ||
+                    shouldEnableButton({
+                      isEditMode,
+                      isSizeAdded,
+                      isVariantMode,
+                    })
                   }
                   className={`rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90 ${
                     isEditMode
