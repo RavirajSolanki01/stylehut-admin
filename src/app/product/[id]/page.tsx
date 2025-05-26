@@ -25,6 +25,7 @@ import {
 import { ImageUpload } from "@/components/FormElements/InputGroup/upload-file";
 import { fileValidation } from "@/utils/schema";
 import { shouldEnableButton } from "@/utils/button-toggler";
+import { getMaxKeyValue } from "@/utils/common";
 
 type FormValues = {
   name: string;
@@ -59,7 +60,6 @@ const CreateUpdateProductPage = () => {
   const { id } = useParams();
   const isEditMode = id !== "new";
   const isVariantMode = (id as string)?.startsWith("new_variant");
-  
 
   const [{ customProductId, variantId }, setCustomProductVariantId] = useState({
     customProductId: uuidv4(),
@@ -76,6 +76,10 @@ const CreateUpdateProductPage = () => {
     { id: number; name: string; size: string }[]
   >([]);
   const [sizeQuantity, setSizeQuantity] = useState<{
+    [key: string]: string;
+  }>({});
+  const [priceOfSize, setPriceOfSize] = useState<{ [key: string]: string }>({});
+  const [discountOfSize, setDiscountOfSize] = useState<{
     [key: string]: string;
   }>({});
   const [anotherSizeQuantity, setAnotherSizeQuantity] = useState<{
@@ -99,6 +103,9 @@ const CreateUpdateProductPage = () => {
   });
 
   const [isSizeChanged, setIsSizeChanged] = useState(false);
+  const [enabled, setEnabled] = useState(false);
+  const [_, setHasPrice] = useState(false);
+
   const formik = useFormik<FormValues>({
     initialValues: initialFormValues,
     validationSchema: Yup.object({
@@ -239,6 +246,7 @@ const CreateUpdateProductPage = () => {
     }
   }, []);
 
+  // Fetch product data
   const fetchSubCategoryDetails = useCallback(async () => {
     try {
       const response: { data: { data: IProduct }; status: number } =
@@ -277,12 +285,30 @@ const CreateUpdateProductPage = () => {
         } else if (isEditMode && isVariantMode) {
           setMainProduct([...relatedProducts, response.data.data]);
         }
+        setHasPrice(!!size_quantities.find((item) => item.price > 0)?.price);
+        setEnabled(!!size_quantities.find((item) => item.price > 0)?.price);
 
         const customObject = size_quantities.reduce((acc, item) => {
           const sizeId = item.size_data.id;
           const sizeLabel = item.size_data.size;
           const key = `quantity==${sizeId}==${sizeLabel}`;
           acc[key] = isVariantMode ? 0 : item.quantity;
+          return acc;
+        }, {} as any);
+
+        const priceObject = size_quantities.reduce((acc, item) => {
+          const sizeId = item.size_data.id;
+          const sizeLabel = item.size_data.size;
+          const key = `price==${sizeId}==${sizeLabel}`;
+          acc[key] = isVariantMode ? 0 : item.price;
+          return acc;
+        }, {} as any);
+
+        const discountObject = size_quantities.reduce((acc, item) => {
+          const sizeId = item.size_data.id;
+          const sizeLabel = item.size_data.size;
+          const key = `discount==${sizeId}==${sizeLabel}`;
+          acc[key] = isVariantMode ? 0 : item.discount;
           return acc;
         }, {} as any);
 
@@ -295,7 +321,10 @@ const CreateUpdateProductPage = () => {
           return acc;
         }, {} as any);
 
+
         setSizeQuantity(customObject);
+        setPriceOfSize(priceObject);
+        setDiscountOfSize(discountObject);
         setAnotherSizeQuantity(anotherCustomObject);
         setCustomProductVariantId((pre) => ({
           ...pre,
@@ -426,6 +455,21 @@ const CreateUpdateProductPage = () => {
     fetchAllSizeData();
   }, []);
 
+  useEffect(() => {
+    // const maxPrice = Math.max(...Object.values(priceOfSize).map(Number))
+    const result = getMaxKeyValue(priceOfSize);
+
+    setFieldValue("price", result?.value);
+
+    setFieldValue(
+      "discount",
+      result?.key
+        ? discountOfSize["discount==" + result?.key.split("price==")[1]]
+        : 0,
+    );
+
+  }, [priceOfSize, discountOfSize]);
+
   const handleSizeQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setSizeQuantity((prev) => ({ ...prev, [name]: value }));
@@ -433,6 +477,29 @@ const CreateUpdateProductPage = () => {
     setIsSizeQuantityAdded(false);
   };
 
+  const handlePriceOfSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPriceOfSize((prev) => ({ ...prev, [name]: value }));
+    setIsSizeChanged(true);
+    console.log(priceOfSize, ">><< priceOfSize");
+  };
+
+  const handleDiscountOfSizeChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const { name, value } = e.target;
+    setDiscountOfSize((prev) => ({ ...prev, [name]: value }));
+    setIsSizeChanged(true);
+    console.log(discountOfSize, ">><< discountOfSizeZie");
+  };
+
+  const handleSizePrice = () => {
+    setEnabled(!enabled);
+    setPriceOfSize({});
+    setDiscountOfSize({});
+  };
+
+  // Add size  / Save size button
   const handleAddSizeQuantityData = async () => {
     console.log("add size quantity data");
 
@@ -448,7 +515,7 @@ const CreateUpdateProductPage = () => {
     }
 
     setIsSizeQuantityAdded(false);
-   
+
     try {
       let payload: any[] = [];
       let url = "/size-quantity";
@@ -457,20 +524,39 @@ const CreateUpdateProductPage = () => {
           quantity: Number(sizeQuantity[item]),
           size_id: Number(item.split("==")[1]),
           custom_product_id: customProductId,
+          price:
+            Object.keys(priceOfSize).length > 0
+              ? Number(priceOfSize["price" + item.split("quantity")[1]])
+              : 0,
+          discount:
+            Object.keys(discountOfSize).length > 0
+              ? Number(discountOfSize["discount" + item.split("quantity")[1]])
+              : 0,
         }));
-    
+
       const buildPatchPayload = () =>
         Object.keys(anotherSizeQuantity).map((item) => ({
           quantity: Number(
-            sizeQuantity[item.split("==").slice(0, -1).join("==")]
+            sizeQuantity[item.split("==").slice(0, -1).join("==")],
           ),
           size_id: Number(item.split("==")[1]),
           custom_product_id: currentProductData.custom_product_id,
           id: Number(item.split("==")[3]),
+          price: Number(priceOfSize['price==' + item.split("==").slice(1, -1).join("==")]),
+          discount: Number(discountOfSize['discount==' + item.split("==").slice(1, -1).join("==")])
         }));
-    
+
+      console.log(
+        "anotherSizeQuantity=>",
+        anotherSizeQuantity,
+        "priceOfSize=>",
+        priceOfSize,
+        "discountOfSize=>",
+        discountOfSize,
+      );
+
       let response;
-    
+
       if (isEditMode) {
         if (isVariantMode) {
           payload = buildPostPayload(customProductId);
@@ -482,9 +568,9 @@ const CreateUpdateProductPage = () => {
           // DELETE first, then POST
           await apiService.delete(
             `${url}?custom_product_id=${currentProductData.custom_product_id}`,
-            { withAuth: true }
+            { withAuth: true },
           );
-    
+
           payload = buildPostPayload(currentProductData.custom_product_id);
           response = await apiService.post(url, payload, { withAuth: true });
         }
@@ -492,7 +578,7 @@ const CreateUpdateProductPage = () => {
         payload = buildPostPayload(customProductId);
         response = await apiService.post(url, payload, { withAuth: true });
       }
-    
+
       if (response?.status === 200) {
         toast.success("Size quantity data saved successfully");
         setIsSizeAdded(true);
@@ -504,7 +590,6 @@ const CreateUpdateProductPage = () => {
         "Something went wrong. Please try again later.";
       toast.error(msg);
     }
-    
   };
 
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
@@ -661,6 +746,7 @@ const CreateUpdateProductPage = () => {
                 type="number"
                 name="price"
                 label="Price"
+                disabled={enabled}
                 placeholder="Enter price"
                 required
                 value={values.price}
@@ -676,6 +762,7 @@ const CreateUpdateProductPage = () => {
                 type="number"
                 name="discount"
                 label="Discount"
+                disabled={enabled}
                 placeholder="Enter discount"
                 required
                 value={values.discount}
@@ -692,7 +779,7 @@ const CreateUpdateProductPage = () => {
 
               <Select
                 label="Size"
-                className="mb-5 w-full sm:w-9/12 md:w-1/2"
+                className="mb-3 w-full sm:w-9/12 md:w-1/2"
                 name="size"
                 value={values.size}
                 placeholder="Select size"
@@ -708,11 +795,30 @@ const CreateUpdateProductPage = () => {
                   handleChange(e);
                   setSizeType(e.target.value);
                   setSizeQuantity({});
+                  setPriceOfSize({});
                 }}
                 onBluer={handleBlur}
                 error={touched.size && errors.size ? errors.size : ""}
               />
-
+              {sizeType !== "" && (
+                <div className="mb-2 flex items-center gap-2">
+                  <button
+                    title="has quantity"
+                    onClick={() => handleSizePrice()}
+                    type="button"
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${
+                      enabled ? "bg-primary" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${
+                        enabled ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>{" "}
+                  <span>Dynamic Pricing</span>
+                </div>
+              )}
               <div>
                 {size.map((item, index) =>
                   item.name === sizeType ? (
@@ -724,7 +830,7 @@ const CreateUpdateProductPage = () => {
                         >
                           {item.size}
                         </div>
-                        <div className="col-span-3">
+                        <div className="col-span-3 flex gap-2">
                           <input
                             type="text"
                             placeholder="Enter quantity"
@@ -740,6 +846,42 @@ const CreateUpdateProductPage = () => {
                               }
                             }}
                           />
+                          {enabled && (
+                            <input
+                              type="text"
+                              placeholder="Enter Price"
+                              className="w-full rounded-md border border-gray-300 p-2"
+                              name={`price==${item.id}==${item.size}`}
+                              value={
+                                priceOfSize[`price==${item.id}==${item.size}`]
+                              }
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^\d*$/.test(value)) {
+                                  handlePriceOfSizeChange(e);
+                                }
+                              }}
+                            />
+                          )}
+                          {enabled && (
+                            <input
+                              type="text"
+                              placeholder="Enter Discount"
+                              className="w-full rounded-md border border-gray-300 p-2"
+                              name={`discount==${item.id}==${item.size}`}
+                              value={
+                                discountOfSize[
+                                  `discount==${item.id}==${item.size}`
+                                ]
+                              }
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^\d*$/.test(value)) {
+                                }
+                                handleDiscountOfSizeChange(e);
+                              }}
+                            />
+                          )}
                         </div>
                       </div>
                     </div>
