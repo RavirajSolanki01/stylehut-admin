@@ -193,13 +193,15 @@ const ShopByCategory = () => {
                 key: "minDiscount",
                 label: "Min Discount",
                 sortable: true,
-                render: (_value, row) => `${row.minDiscount}%` ?? "-",
+                render: (_value, row) =>
+                  row.minDiscount ? `${row.minDiscount}%` : "-",
               },
               {
                 key: "maxDiscount",
                 label: "Max Discount",
                 sortable: true,
-                render: (_value, row) => `${row.maxDiscount}%` ?? "-",
+                render: (_value, row) =>
+                  row.maxDiscount ? `${row.maxDiscount}%` : "-",
               },
               {
                 key: "image",
