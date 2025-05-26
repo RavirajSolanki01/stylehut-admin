@@ -35,6 +35,12 @@ export const NAV_DATA = [
         items: [],
       },
       {
+        title: "Cart Added Products",
+        icon: Icons.CartIcon,
+        url: "/cart-added-items",
+        items: [],
+      },
+      {
         title: "Gender",
         url: "/gender",
         icon: Icons.GenderIcon,
@@ -56,6 +62,12 @@ export const NAV_DATA = [
         title: "Coupon",
         url: "/coupon",
         icon: Icons.DiscountIcon,
+        items: [],
+      },
+      {
+        title: "Wishlist",
+        url: "/wishlist",
+        icon: Icons.WishListIcon,
         items: [],
       },
       {
