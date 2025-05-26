@@ -110,6 +110,8 @@ export interface IProduct {
   size_quantities: {
     id: number;
     quantity: number;
+    discount: number;
+    price: number;
     size_data: {
       name: string;
       id: number;
