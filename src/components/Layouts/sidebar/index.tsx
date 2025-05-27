@@ -5,13 +5,30 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_DATA } from "./data";
-import { ArrowLeftIcon } from "./icons";
+import { ArrowLeftIcon, ChevronUp } from "./icons";
 import { MenuItem } from "./menu-item";
 import { useSidebarContext } from "./sidebar-context";
+import { useEffect, useState } from "react";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { setIsOpen, isOpen, isMobile, toggleSidebar } = useSidebarContext();
+  const [expandedItems, setExpandedItems] = useState<string | null>(null);
+
+  useEffect(() => {
+    NAV_DATA.some((section) => {
+      return section.items.some((item) => {
+        if (item.url === pathname) {
+          setExpandedItems(section.label); // force open
+          return true;
+        }
+      });
+    });
+  }, [pathname]);
+
+  const toggleExpanded = (label: string) => {
+    setExpandedItems((prev) => (prev === label ? null : label));
+  };
 
   return (
     <>
@@ -59,31 +76,50 @@ export function Sidebar() {
           {/* Navigation */}
           <div className="custom-scrollbar mt-6 flex-1 overflow-y-auto pr-3 min-[850px]:mt-10">
             {NAV_DATA.map((section) => (
-              <div key={section.label} className="mb-6">
-                <h2 className="mb-2 text-sm font-medium text-dark-4 dark:text-dark-6">
-                  {section.label}
-                </h2>
-
-                <nav role="navigation" aria-label={section.label}>
-                  <ul className="space-y-0">
-                    {section.items.map((item) => (
-                      <li key={item.title}>
-                        <MenuItem
-                          className="flex items-center gap-3 py-3"
-                          as="link"
-                          href={item.url}
-                          isActive={pathname === item.url}
-                        >
-                          <item.icon
-                            className="size-6 shrink-0"
-                            aria-hidden="true"
-                          />
-                          <span>{item.title}</span>
-                        </MenuItem>
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
+              <div
+                key={section.label}
+                onClick={() => toggleExpanded(section.label)}
+                className={cn(
+                  "section-header mb-2 w-full px-3 py-2",
+                  expandedItems !== section.label &&
+                    section.items.some((item) => item.url === pathname) &&
+                    "mb-3 rounded-lg bg-[rgba(87,80,241,0.07)] pb-[1.5px] font-medium text-dark-4 text-primary transition-all duration-200 hover:bg-[rgba(87,80,241,0.07)] dark:bg-[#FFFFFF1A] dark:text-dark-6 dark:text-white", // Highlight when matched but collapsed
+                )}
+              >
+                <div className="flex items-center">
+                  <h2 className="text-md mb-2 font-medium text-dark-4 dark:text-dark-6">
+                    {section.label}
+                  </h2>
+                  <ChevronUp
+                    className={cn(
+                      "ml-auto rotate-180 transition-transform duration-200",
+                      expandedItems === section.label && "rotate-0",
+                    )}
+                    aria-hidden="true"
+                  />
+                </div>
+                {expandedItems === section.label && (
+                  <nav role="navigation" aria-label={section.label}>
+                    <ul className="space-y-0">
+                      {section.items.map((item) => (
+                        <div key={item.title}>
+                          <MenuItem
+                            className="flex items-center gap-3 py-3"
+                            as="link"
+                            href={item.url}
+                            isActive={pathname === item.url}
+                          >
+                            <item.icon
+                              className="size-6 shrink-0"
+                              aria-hidden="true"
+                            />
+                            <span>{item.title}</span>
+                          </MenuItem>
+                        </div>
+                      ))}
+                    </ul>
+                  </nav>
+                )}
               </div>
             ))}
           </div>

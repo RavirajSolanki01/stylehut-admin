@@ -2,7 +2,7 @@ import * as Icons from "../icons";
 
 export const NAV_DATA = [
   {
-    label: "MAIN MENU",
+    label: "Product Management",
     items: [
       {
         title: "Category",
@@ -40,12 +40,11 @@ export const NAV_DATA = [
         icon: Icons.ShopByCategoryIcon,
         items: [],
       },
-      {
-        title: "Cart Added Products",
-        icon: Icons.CartIcon,
-        url: "/cart-added-items",
-        items: [],
-      },
+    ],
+  },
+  {
+    label: "User Management",
+    items: [
       {
         title: "Gender",
         url: "/gender",
@@ -65,17 +64,38 @@ export const NAV_DATA = [
         items: [],
       },
       {
-        title: "Coupon",
-        url: "/coupon",
-        icon: Icons.DiscountIcon,
-        items: [],
-      },
-      {
         title: "Wishlist",
         url: "/wishlist",
         icon: Icons.WishListIcon,
         items: [],
       },
+    ],
+  },
+  {
+    label: "Cart",
+    items: [
+      {
+        title: "Cart Added Products",
+        icon: Icons.CartIcon,
+        url: "/cart-added-items",
+        items: [],
+      },
+    ],
+  },
+  {
+    label: "Offers",
+    items: [
+      {
+        title: "Coupon",
+        url: "/coupon",
+        icon: Icons.DiscountIcon,
+        items: [],
+      },
+    ],
+  },
+  {
+    label: "Policy",
+    items: [
       {
         title: "Terms & Conditions",
         url: "/terms",
