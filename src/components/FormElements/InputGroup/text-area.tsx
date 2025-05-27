@@ -10,6 +10,7 @@ interface PropsType {
   className?: string;
   icon?: React.ReactNode;
   defaultValue?: string;
+  maxLength?: number;
   name: string;
   value: string;
   handleChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -31,6 +32,7 @@ export function TextAreaGroup({
   value,
   name,
   error,
+  maxLength,
 }: PropsType) {
   const id = useId();
 
@@ -50,6 +52,7 @@ export function TextAreaGroup({
           rows={6}
           value={value}
           name={name}
+          maxLength={maxLength}
           onChange={handleChange}
           onBlur={handleBlur}
           placeholder={placeholder}
@@ -64,6 +67,12 @@ export function TextAreaGroup({
         />
 
         {icon}
+
+        {maxLength && (
+          <span className="absolute bottom-2 right-3 text-xs text-gray-500 dark:text-gray-400">
+            {value?.length || 0}/{maxLength}
+          </span>
+        )}
       </div>
       {error && <p className="mt-2 text-xs text-red">{error}</p>}
     </div>
