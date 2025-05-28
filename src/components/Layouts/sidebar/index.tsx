@@ -16,11 +16,17 @@ export function Sidebar() {
   const { setIsOpen, isOpen, isMobile, toggleSidebar } = useSidebarContext();
   const [expandedItems, setExpandedItems] = useState<string | null>(null);
 
+  const isPathMatch = (itemUrl: string) => {
+    return pathname === itemUrl || pathname.startsWith(`${itemUrl}/`);
+  };
+
   useEffect(() => {
     NAV_DATA.some((section) => {
       return section.items.some((item) => {
-        if (item.url === pathname) {
-          setExpandedItems(section.label);
+        if (isPathMatch(item.url)) {
+          if (expandedItems !== section.label) {
+            setExpandedItems(section.label);
+          }
           return true;
         }
       });
@@ -81,10 +87,10 @@ export function Sidebar() {
                 key={section.label}
                 onClick={() => toggleExpanded(section.label)}
                 className={cn(
-                  "section-header mb-2 w-full px-3 py-2",
+                  "section-header mb-2 w-full cursor-pointer px-3 py-2",
                   expandedItems !== section.label &&
-                    section.items.some((item) => item.url === pathname) &&
-                    "mb-3 rounded-lg bg-[rgba(87,80,241,0.07)] pb-[1.5px] font-medium text-dark-4 text-primary transition-all duration-200 hover:bg-[rgba(87,80,241,0.07)] dark:bg-[#FFFFFF1A] dark:text-dark-6 dark:text-white", // Highlight when matched but collapsed
+                    section.items.some((item) => isPathMatch(item.url)) &&
+                    "mb-3 rounded-lg bg-[rgba(87,80,241,0.07)] pb-[1.5px] font-medium text-dark-4 text-primary transition-all duration-200 hover:bg-[rgba(87,80,241,0.07)] dark:bg-[#FFFFFF1A] dark:text-dark-6 dark:text-white",
                 )}
               >
                 <div className="flex items-center">
@@ -108,7 +114,7 @@ export function Sidebar() {
                             className="flex items-center gap-3 py-3"
                             as="link"
                             href={item.url}
-                            isActive={pathname === item.url}
+                            isActive={isPathMatch(item.url)}
                           >
                             <item.icon
                               className="size-6 shrink-0"
