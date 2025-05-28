@@ -920,6 +920,7 @@ const CreateUpdateProductPage = () => {
                 className="mb-5.5 w-full sm:w-9/12 md:w-1/2"
                 label="Description"
                 name="description"
+                maxLength={1024}
                 placeholder="Enter description"
                 value={values.description}
                 required
