@@ -187,7 +187,7 @@ const ShopByCategory = () => {
                 key: "sub_category_id",
                 label: "Sub Category",
                 sortable: true,
-                render: (_value, row) => row.sub_category_id ?? "-",
+                render: (_value, row) => row?.sub_category?.name ?? "-",
               },
               {
                 key: "minDiscount",
