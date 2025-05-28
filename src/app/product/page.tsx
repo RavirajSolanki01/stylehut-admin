@@ -18,7 +18,6 @@ import useDebounce from "@/hooks/useDebounce";
 import { CentralLoader } from "@/components/Loader";
 import CommonDialog from "@/components/Dialog/CommonDialog";
 import ImageHoverPreview from "@/components/ImageHoverPreview";
-import { error } from "console";
 
 const ProductPage = () => {
   const router = useRouter();

@@ -131,13 +131,6 @@ export function DynamicTable<T extends { id: number | string }>({
     return col.render ? col.render(value, row, index) : String(value);
   };
 
-  // Add null check before logging
-  if (data === undefined) {
-    console.warn("Data is undefined in DynamicTable component");
-  } else {
-    console.log("Table data:", data);
-  }
-
   return (
     <div className="rounded-lg border bg-white p-4 shadow-sm dark:bg-gray-900">
       <Table>

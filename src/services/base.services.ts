@@ -54,7 +54,6 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 403 || error.response?.status === 401) {
       if (typeof window !== "undefined") {
-        toast.error("You are unauthorized person to perform this task");
         localStorage.clear();
         window.location.href = "/auth/login";
         return;

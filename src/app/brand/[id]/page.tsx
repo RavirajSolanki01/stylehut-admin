@@ -10,6 +10,14 @@ import { SmallLoader } from "@/components/Loader";
 import { useEffect, useState } from "react";
 import apiService from "@/services/base.services";
 import { toast } from "react-toastify";
+import { MultiSelect } from "@/components/FormElements/select-multi";
+import { IGetAllSubCategoriesResponse, ISubCategory } from "@/types/interface";
+
+interface BrandFormValues {
+  name: string;
+  description: string;
+  subCategories: string[];
+}
 
 const CreateUpdateBrandPage = () => {
   const router = useRouter();
@@ -17,16 +25,32 @@ const CreateUpdateBrandPage = () => {
   const id = params.id as string;
   const isEditMode = id !== "new";
 
+  const [loading, setIsLoading] = useState(false);
+  const [categories, setCategories] = useState<ISubCategory[]>([]);
+
   useEffect(() => {
     isEditMode && getBrandDetails();
+    fetchCategories();
   }, [isEditMode]);
 
-  const [loading, setIsLoading] = useState(false);
+  const fetchCategories = async () => {
+    try {
+      const res: IGetAllSubCategoriesResponse = await apiService.get(
+        "/all-sub-category",
+        { withAuth: false },
+      );
+      if (res.status === 200) setCategories(res.data.data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      toast.error("Failed to fetch categories");
+    }
+  };
 
-  const formik = useFormik({
+  const formik = useFormik<BrandFormValues>({
     initialValues: {
       name: "",
       description: "",
+      subCategories: [],
     },
     validationSchema: Yup.object({
       name: Yup.string()
@@ -39,6 +63,10 @@ const CreateUpdateBrandPage = () => {
         .required("Description is required")
         .max(1024, "Description must be 1024 characters or less")
         .min(10, "Description must be at least 10 characters"),
+      subCategories: Yup.array()
+        .of(Yup.string())
+        .min(1, "At least one sub category is required")
+        .required("Sub categories are required"),
     }),
     onSubmit: (values) => {
       createOrUpdateBrand(values);
@@ -49,6 +77,7 @@ const CreateUpdateBrandPage = () => {
   const createOrUpdateBrand = async (values: {
     name: string;
     description: string;
+    subCategories: string[];
   }) => {
     setIsLoading(true);
 
@@ -60,7 +89,17 @@ const CreateUpdateBrandPage = () => {
       : "Brand created successfully";
 
     try {
-      const response = await method(endpoint, values, { withAuth: true });
+      const response = await method(
+        endpoint,
+        {
+          name: values.name,
+          description: values.description,
+          subCategories: values.subCategories.map((subCategory) =>
+            parseInt(subCategory),
+          ),
+        },
+        { withAuth: true },
+      );
 
       if (response?.status === 201 || response?.status === 200) {
         toast.success(successMessage);
@@ -80,16 +119,24 @@ const CreateUpdateBrandPage = () => {
   const getBrandDetails = async () => {
     try {
       const response: {
-        data: { data: { name: string; description: string } };
+        data: {
+          data: {
+            name: string;
+            description: string;
+            subCategories: { sub_category_id: number }[];
+          };
+        };
         status: number;
       } = await apiService.get(`/brand/${id}`, {
         withAuth: true,
       });
-      console.log(response.data.data, response.status);
       if (response?.status === 200) {
         formik.setValues({
           name: response.data.data.name,
           description: response.data.data.description,
+          subCategories: response.data.data.subCategories.map((subCategory) =>
+            subCategory.sub_category_id.toString(),
+          ),
         });
       }
     } catch (error: any) {
@@ -128,6 +175,28 @@ const CreateUpdateBrandPage = () => {
                 error={
                   formik.touched.name && formik.errors.name
                     ? formik.errors.name
+                    : ""
+                }
+              />
+
+              <MultiSelect
+                className="mb-5 w-full sm:w-9/12 md:w-1/2"
+                label="Sub Categories"
+                name="subCategories"
+                placeholder="Select sub categories"
+                items={categories.map((category) => ({
+                  value: category.id.toString(),
+                  label: category.category.name + " - " + category.name,
+                }))}
+                value={formik.values.subCategories}
+                onChange={(selectedOptions: string[]) =>
+                  formik.setFieldValue("subCategories", selectedOptions)
+                }
+                onBlur={() => formik.setFieldTouched("subCategories", true)}
+                required
+                error={
+                  formik.touched.subCategories && formik.errors.subCategories
+                    ? (formik?.errors?.subCategories as string)
                     : ""
                 }
               />

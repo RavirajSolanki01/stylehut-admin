@@ -18,6 +18,7 @@ import {
   IGetAllCategoriesResponse,
   IGetAllSubCategoriesType,
   IProduct,
+  IProductBrandApiResponse,
   ISize,
   ISizeApiResponse,
   ISubCategoryType,
@@ -232,13 +233,16 @@ const CreateUpdateProductPage = () => {
     [],
   );
 
-  const fetchAllBrand = useCallback(async () => {
+  const fetchAllBrand = useCallback(async (subCategoryId: string) => {
     try {
       setLoadingStates((prev) => ({ ...prev, productLoading: true }));
-      const res: IBrandApiResponse = await apiService.get(`/brand`, {
-        withAuth: true,
-      });
-      if (res.status === 200) setBrand(res.data.data.items);
+      const res: IProductBrandApiResponse = await apiService.get(
+        `/sub-category/brand/${subCategoryId}`,
+        {
+          withAuth: true,
+        },
+      );
+      if (res.status === 200) setBrand(res.data.data);
     } catch {
       toast.error("Something went wrong, please try again later.");
     } finally {
@@ -320,7 +324,6 @@ const CreateUpdateProductPage = () => {
           acc[key] = isVariantMode ? 0 : item.quantity;
           return acc;
         }, {} as any);
-
 
         setSizeQuantity(customObject);
         setPriceOfSize(priceObject);
@@ -451,7 +454,6 @@ const CreateUpdateProductPage = () => {
   }, [isEditMode, fetchAllCategories, fetchSubCategoryDetails]);
 
   useEffect(() => {
-    fetchAllBrand();
     fetchAllSizeData();
   }, []);
 
@@ -467,7 +469,6 @@ const CreateUpdateProductPage = () => {
         ? discountOfSize["discount==" + result?.key.split("price==")[1]]
         : 0,
     );
-
   }, [priceOfSize, discountOfSize]);
 
   const handleSizeQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -542,8 +543,14 @@ const CreateUpdateProductPage = () => {
           size_id: Number(item.split("==")[1]),
           custom_product_id: currentProductData.custom_product_id,
           id: Number(item.split("==")[3]),
-          price: Number(priceOfSize['price==' + item.split("==").slice(1, -1).join("==")]),
-          discount: Number(discountOfSize['discount==' + item.split("==").slice(1, -1).join("==")])
+          price: Number(
+            priceOfSize["price==" + item.split("==").slice(1, -1).join("==")],
+          ),
+          discount: Number(
+            discountOfSize[
+              "discount==" + item.split("==").slice(1, -1).join("==")
+            ],
+          ),
         }));
 
       console.log(
@@ -696,7 +703,9 @@ const CreateUpdateProductPage = () => {
                     values.categoryId,
                     e.target.value,
                   );
+                  fetchAllBrand(e.target.value);
                   setFieldValue("subCategoryTypeId", "");
+                  setFieldValue("brandId", "");
                 }}
                 onBluer={handleBlur}
                 error={

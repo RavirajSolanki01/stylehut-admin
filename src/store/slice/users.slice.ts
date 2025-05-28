@@ -28,12 +28,10 @@ const loggedInUserSlice = createSlice({
   reducers: {
     addUserProfileData: (state, action: PayloadAction<FormData>) => {
       const payload = { ...action.payload };
-      console.log(payload, "payload");
       state.userData = payload;
     },
     updateProfileData: (state, action: PayloadAction<Partial<FormData>>) => {
       const payload = { ...action.payload };
-      console.log(payload, "payload");
       state.userData = { ...state.userData, ...payload };
     },
   },
