@@ -40,11 +40,11 @@ export function UserInfo() {
           <span className="sr-only">My Account</span>
 
           <figure className="flex items-center gap-3">
-            {user.profile_url ? (
+            {user?.profile_url ? (
               <Image
-                src={user.profile_url}
+                src={user?.profile_url}
                 className="size-12 rounded-full border border-gray-5"
-                alt={`Avatar of ${user.first_name} ${user.last_name}`}
+                alt={`Avatar of ${user?.first_name} ${user?.last_name}`}
                 role="presentation"
                 width={200}
                 height={200}
@@ -53,7 +53,7 @@ export function UserInfo() {
               <Image
                 src="https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg"
                 className="size-12 rounded-full border border-gray-5"
-                alt={`Avatar of ${user.first_name} ${user.last_name}`}
+                alt={`Avatar of ${user?.first_name} ${user?.last_name}`}
                 role="presentation"
                 width={200}
                 height={200}
@@ -61,7 +61,7 @@ export function UserInfo() {
             )}
             <figcaption className="flex items-center gap-1 font-medium text-dark dark:text-dark-6 max-[1024px]:sr-only">
               <span>
-                {user.first_name} {user.last_name}
+                {user?.first_name} {user?.last_name}
               </span>
 
               <ChevronUpIcon
@@ -83,11 +83,11 @@ export function UserInfo() {
           <h2 className="sr-only">User information</h2>
 
           <figure className="flex items-center gap-2.5 px-5 py-3.5">
-          {user.profile_url ? (
+          {user?.profile_url ? (
               <Image
-                src={user.profile_url}
+                src={user?.profile_url}
                 className="size-12 rounded-full border border-gray-5"
-                alt={`Avatar of ${user.first_name} ${user.last_name}`}
+                alt={`Avatar of ${user?.first_name} ${user?.last_name}`}
                 role="presentation"
                 width={200}
                 height={200}
@@ -96,7 +96,7 @@ export function UserInfo() {
               <Image
                 src="https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg"
                 className="size-12 rounded-full border border-gray-5"
-                alt={`Avatar of ${user.first_name} ${user.last_name}`}
+                alt={`Avatar of ${user?.first_name} ${user?.last_name}`}
                 role="presentation"
                 width={200}
                 height={200}
@@ -104,12 +104,12 @@ export function UserInfo() {
             )}
 
             <figcaption className="space-y-1 text-base font-medium">
-              {user.first_name&&<div className="mb-2 leading-none text-dark dark:text-white">
-                {user.first_name} {user.last_name}
+              {user?.first_name&&<div className="mb-2 leading-none text-dark dark:text-white">
+                {user?.first_name} {user?.last_name}
               </div>}
 
               <div className="break-all leading-none text-gray-6">
-                {user.email}
+                {user?.email}
               </div>
             </figcaption>
           </figure>

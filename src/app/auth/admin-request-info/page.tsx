@@ -2,16 +2,19 @@
 import React, { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import NextTopLoader from "nextjs-toploader";
+import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
-import { CentralLoader, SmallLoader } from "@/components/Loader";
+import { SmallLoader } from "@/components/Loader";
 import { ReviewMagnifierIcon } from "@/assets/icons";
 import apiService from "@/services/base.services";
+import { addAuthToken } from "@/store/slice/auth.slice";
 
 const CheckAdminActivate = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
+  const dispatch = useDispatch();
 
   const [loading, setLoading] = useState(false);
 
@@ -23,14 +26,29 @@ const CheckAdminActivate = () => {
           message: string;
           role: string;
           is_approved: boolean;
+          token: string;
+          isActive?: boolean;
         };
         status: number;
       } = await apiService.get(`admin-register/${email}`);
-      if (response.status === 200 && response.data.is_approved) {
-        toast.success("Congratulations, your account is activated");
-        router.push("/");
-      }else{
-        toast.info("Your account is not activated yet, please wait for approval");
+      if (response.status === 200) {
+        const { is_approved, isActive, token } = response.data;
+
+        if (is_approved && isActive) {
+          toast.success("Congratulations, your account is activated");
+          dispatch(addAuthToken({ token }));
+          router.push("/");
+          return;
+        }
+
+        if (!isActive) {
+          router.push(`/auth/admin-deactivate-info?email=${email}`);
+          return;
+        }
+
+        toast.info(
+          "Your account is not activated yet, please wait for approval",
+        );
       }
     } catch (error: any) {
       if (error.response?.status === 404 || error.response?.status === 400) {
@@ -45,7 +63,6 @@ const CheckAdminActivate = () => {
 
   return (
     <div className="flex h-fit min-h-screen w-full items-center justify-center">
-      <CentralLoader loading={loading} />
       <div className="w-full max-w-[400px] rounded-lg bg-white p-6 shadow-md dark:bg-[#020d1a]">
         <div className="flex flex-col items-center justify-center gap-4">
           <div className="flex items-center gap-4 text-center">

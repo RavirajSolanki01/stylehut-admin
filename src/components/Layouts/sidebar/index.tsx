@@ -10,6 +10,10 @@ import { NAV_DATA } from "./data";
 import { ArrowLeftIcon, ChevronUp } from "./icons";
 import { MenuItem } from "./menu-item";
 import { useSidebarContext } from "./sidebar-context";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+
+import * as Icons from "./icons";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -36,6 +40,41 @@ export function Sidebar() {
   const toggleExpanded = (label: string) => {
     setExpandedItems((prev) => (prev === label ? null : label));
   };
+
+  const auth = useSelector((state: RootState) => state.auth);
+
+  const isSuperAdmin = auth.role === "SuperAdmin";
+
+  const navData = NAV_DATA.map((section) => {
+    const newSection = { ...section };
+    newSection.items = [...section.items];
+  
+    if (isSuperAdmin) {
+      const insertAfterTitle = "Users";
+      const index = newSection.items.findIndex(
+        (item) => item.title === insertAfterTitle
+      );
+  
+      if (index !== -1) {
+        newSection.items.splice(index + 1, 0, {
+          icon: Icons.PendingRequestIcon,
+          items: [],
+          title: "Pending Requests",
+          url: "/pending-admin-requests",
+        });
+      } else {  
+        newSection.items.push({
+          icon: Icons.PendingRequestIcon,
+          items: [],
+          title: "Pending Requests",
+          url: "/pending-admin-requests",
+        });
+      }
+    }
+  
+    return newSection;
+  });
+  
 
   return (
     <>
@@ -82,7 +121,7 @@ export function Sidebar() {
 
           {/* Navigation */}
           <div className="custom-scrollbar mt-6 flex-1 overflow-y-auto pr-3 min-[850px]:mt-10">
-            {NAV_DATA.map((section) => (
+            {navData.map((section) => (
               <div
                 key={section.label}
                 onClick={() => toggleExpanded(section.label)}

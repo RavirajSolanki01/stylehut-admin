@@ -58,6 +58,7 @@ const OtpVerify = () => {
           token: string;
           isNewUser: boolean;
           role: string;
+          isActive: boolean;
         };
         status: number;
       } = await apiService.post("/admin-verify-otp", {
@@ -65,14 +66,24 @@ const OtpVerify = () => {
         email,
       });
       if (response.status === 200) {
-        toast.success("Email verification successful");
-        dispatch(addUserRole({ role: response.data.role }));
+        const { isNewUser, token, isActive, role } = response.data;
 
-        if (!response.data.isNewUser && response.data.token) {
-          dispatch(addAuthToken({ token: response.data.token }));
+        toast.success("Email verification successful");
+        dispatch(addUserRole({ role }));
+
+        const userRoutes = {
+          isExistingActiveUser: !isNewUser && token && isActive,
+          isPendingAdminApproval: isActive && role === "Admin",
+          isDeactivatedAdmin: !isActive && role === "Admin"
+        };
+
+        if (userRoutes.isExistingActiveUser) {
+          dispatch(addAuthToken({ token }));
           router.push("/");
-        }else{
-          router.push(`/auth/admin-activate-info?email=${email}`);
+        } else if (userRoutes.isPendingAdminApproval) {
+          router.push(`/auth/admin-request-info?email=${email}`);
+        } else if (userRoutes.isDeactivatedAdmin) {
+          router.push(`/auth/admin-deactivate-info?email=${email}`);
         }
       }
     } catch (error: any) {
