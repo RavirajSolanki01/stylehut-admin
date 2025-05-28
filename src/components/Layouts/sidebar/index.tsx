@@ -1,14 +1,15 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { NAV_DATA } from "./data";
 import { ArrowLeftIcon, ChevronUp } from "./icons";
 import { MenuItem } from "./menu-item";
 import { useSidebarContext } from "./sidebar-context";
-import { useEffect, useState } from "react";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -19,7 +20,7 @@ export function Sidebar() {
     NAV_DATA.some((section) => {
       return section.items.some((item) => {
         if (item.url === pathname) {
-          setExpandedItems(section.label); // force open
+          setExpandedItems(section.label);
           return true;
         }
       });
