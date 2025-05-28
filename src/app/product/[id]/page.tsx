@@ -360,6 +360,7 @@ const CreateUpdateProductPage = () => {
           String(category.id),
           String(sub_category_id),
         );
+        fetchAllBrand(String(sub_category_id));
       }
     } catch (error: any) {
       if (error?.response?.status === 404) {
