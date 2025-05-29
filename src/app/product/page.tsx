@@ -176,6 +176,12 @@ const ProductPage = () => {
                 render: (_value, row) => row.sub_category?.name ?? "-",
               },
               {
+                key: "sub_category_type",
+                label: "Sub Category Type",
+                sortable: true,
+                render: (_value, row) => row.sub_category_type?.name ?? "-",
+              },
+              {
                 key: "brand",
                 label: "Brand",
                 sortable: true,
