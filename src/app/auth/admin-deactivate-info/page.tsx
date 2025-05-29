@@ -1,15 +1,39 @@
 "use client";
-import React from "react";
-import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { UserAccountIcon } from "@/assets/icons";
 import { toast } from "react-toastify";
+import apiService from "@/services/base.services";
+import { SmallLoader } from "@/components/Loader";
 
 const AccountDeactivated = () => {
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email");
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  const handleSupportClick = () => {
-    toast.info("Your request has been received. We’ll get back to you soon.")
-    router.push("/auth/login");
+  const handleSupportClick = async () => {
+    setLoading(true);
+    try {
+      const response = await apiService.post("/contact-support-request", {
+        email: email,
+      });
+      if (response.status === 200) {
+        toast.success(
+          "Your request has been received. We’ll get back to you soon.",
+        );
+        router.push("/auth/login");
+      }
+    } catch (error: any) {
+      if (error.status === 404) {
+        toast.error("User not found");
+      }
+      if (error.status === 400) {
+        toast.error("Email is required");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -23,16 +47,17 @@ const AccountDeactivated = () => {
             </h2>
           </div>
           <p className="text-gray-600 dark:text-gray-300">
-            It looks like your account has been deactivated by the super admin. If you
-            believe this is a mistake or need further assistance, please contact
-            support.
+            It looks like your account has been deactivated by the super admin.
+            If you believe this is a mistake or need further assistance, please
+            contact support.
           </p>
 
           <button
             onClick={handleSupportClick}
+            disabled={loading}
             className="mt-4 w-full rounded-md bg-red-500 px-4 py-2 font-medium text-white transition hover:bg-red-600"
           >
-            Contact Support
+            Contact Support <SmallLoader loading={loading} />
           </button>
         </div>
       </div>
