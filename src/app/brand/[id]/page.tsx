@@ -34,6 +34,7 @@ const CreateUpdateBrandPage = () => {
   }, [isEditMode]);
 
   const fetchCategories = async () => {
+    setIsLoading(true);
     try {
       const res: IGetAllSubCategoriesResponse = await apiService.get(
         "/all-sub-category",
@@ -43,6 +44,8 @@ const CreateUpdateBrandPage = () => {
     } catch (error) {
       console.error("Error fetching categories:", error);
       toast.error("Failed to fetch categories");
+    } finally {
+      setIsLoading(false);
     }
   };
 
