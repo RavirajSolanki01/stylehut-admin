@@ -346,3 +346,13 @@ export interface IGetAllSubCategoriesResponse {
   data: { data: ISubCategory[] };
   status: number;
 }
+
+export interface IOtpExpiryLimitResponse {
+  data: { data: { otp_limit_expires_at: string; message: string } };
+  status: number;
+}
+
+export interface IResendOtpExpiryLimitResponse {
+  data: { data: { resend_otp_limit_expires_at: string } };
+  status: number;
+}

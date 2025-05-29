@@ -46,7 +46,7 @@
 .react-otp-input-container {
   display: flex;
   align-items: center;
-  justify-self: center;
+  justify-content: center;
   gap: 10px;
 }
 .react-otp-input-container input {

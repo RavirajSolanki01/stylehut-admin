@@ -21,7 +21,6 @@ const Login = () => {
       router.back();
     }
   }, []);
-  
 
   const formik = useFormik({
     initialValues: {
@@ -50,7 +49,10 @@ const Login = () => {
         router.push(`/auth/otp-verify?email=${email}`);
       }
     } catch (error: any) {
-      if (error.status === 409) {
+      const { message } = error.response.data;
+      if (error.status === 404) {
+        toast.error(message);
+      } else if (error.status === 409) {
         toast.error("This user already used in consumer side");
       } else {
         toast.error("Something went wrong, please try again later.");
