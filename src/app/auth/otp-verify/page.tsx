@@ -35,6 +35,7 @@ const OtpVerify = () => {
   const [otpLimitExpiry, setOtpLimitExpiry] = useState("");
   const [resendOtpLimitExpiry, setResendOtpLimitExpiry] = useState("");
   const [otpLimitExpiryErr, setOtpLimitExpiryErr] = useState("");
+  const [otpLimitCountdown, setOtpLimitCountdown] = useState("");
 
   useEffect(() => {
     if (!email) {
@@ -108,7 +109,9 @@ const OtpVerify = () => {
         if (message === "Invalid OTP") {
           toast.error(message);
         } else {
-          setOtpLimitExpiryErr(message);
+          setOtpLimitExpiryErr(
+            `You've reached the maximum number of OTP verification attempts. Please try again after ${otpLimitCountdown} minute.`,
+          );
         }
       } else {
         toast.error("Something went wrong, please try again later.");
@@ -151,7 +154,9 @@ const OtpVerify = () => {
       if (response.status === 200) {
         const { otp_limit_expires_at, message } = response.data.data;
         setOtpLimitExpiry(otp_limit_expires_at);
-        setOtpLimitExpiryErr(message);
+        setOtpLimitExpiryErr(
+          `You've reached the maximum number of OTP verification attempts. Please try again after ${otpLimitCountdown} minute.`,
+        );
       }
     } catch (error: any) {
       toast.error("Something went wrong, please try again later.");
@@ -193,26 +198,32 @@ const OtpVerify = () => {
 
     return () => clearInterval(interval);
   }, [resendOtpLimitExpiry]);
-
   useEffect(() => {
-    let interval: any;
+    let interval: NodeJS.Timeout;
 
     if (otpLimitExpiry) {
       interval = setInterval(() => {
         const now = Date.now();
         const expiryTime = new Date(otpLimitExpiry).getTime();
+        const remainingTime = expiryTime - now;
 
-        if (now >= expiryTime) {
+        if (remainingTime <= 0) {
           setOtpLimitExpiry("");
           setOtpLimitExpiryErr("");
+          setOtpLimitCountdown("");
           dispatch(updateOtpAttempts(true));
           clearInterval(interval);
+        } else {
+          // Calculate minutes and seconds
+          const seconds = Math.floor((remainingTime / 1000) % 60);
+          setOtpLimitCountdown(seconds.toString());
         }
       }, 1000);
     }
 
     return () => clearInterval(interval);
   }, [otpLimitExpiry]);
+  console.log("abc=>", otpLimitCountdown, otpLimitExpiry);
 
   useEffect(() => {
     fetchOtpExpiryLimit();
@@ -273,7 +284,12 @@ const OtpVerify = () => {
             </p>
           )}
 
-          <p className="mt-2 text-xs text-red">{otpLimitExpiryErr}</p>
+          {otpLimitCountdown && otpLimitExpiryErr && (
+            <p className="mt-2 text-xs text-red">
+              You have reached the maximum number of OTP verification attempts.
+              Please try again after {otpLimitCountdown} minute.
+            </p>
+          )}
 
           <button
             type="submit"
