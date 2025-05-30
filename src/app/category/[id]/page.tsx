@@ -136,6 +136,7 @@ const CreateUpdateCategoryPage = () => {
                 label="Description"
                 name="description"
                 placeholder="Enter description"
+                maxLength={1024}
                 value={formik.values.description}
                 handleChange={formik.handleChange}
                 handleBlur={formik.handleBlur}

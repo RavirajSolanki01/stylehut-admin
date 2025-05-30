@@ -135,6 +135,7 @@ const CreateUpdateBrandPage = () => {
               <TextAreaGroup
                 className="mb-5.5 w-full sm:w-9/12 md:w-1/2"
                 label="Description"
+                maxLength={1024}
                 name="description"
                 placeholder="Enter description"
                 value={formik.values.description}
