@@ -286,7 +286,7 @@ const OtpVerify = () => {
 
           {otpLimitCountdown && otpLimitExpiryErr && (
             <p className="mt-2 text-xs text-red">
-              You've reached the maximum number of OTP verification attempts.
+              You have reached the maximum number of OTP verification attempts.
               Please try again after {otpLimitCountdown} minute.
             </p>
           )}
