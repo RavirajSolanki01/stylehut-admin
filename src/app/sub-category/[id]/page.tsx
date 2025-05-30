@@ -183,6 +183,7 @@ const CreateUpdateSubCategoryPage = () => {
                 placeholder="Enter description"
                 value={values.description}
                 required
+                maxLength={1024}
                 handleChange={handleChange}
                 handleBlur={handleBlur}
                 error={
