@@ -71,7 +71,7 @@ export interface ISubCategoryType {
 }
 
 export interface ISubCategoryTypeApiResponse {
-  data: { data: { items: ISubCategoryType[]; meta: IPaginationData } };
+  data: { data: { items: IUpdateSubCategoryType[]; meta: IPaginationData } };
   status: number;
 }
 export interface UserAttr {
@@ -355,4 +355,31 @@ export interface IOtpExpiryLimitResponse {
 export interface IResendOtpExpiryLimitResponse {
   data: { data: { resend_otp_limit_expires_at: string } };
   status: number;
+}
+
+export interface IUpdateSubCategoryType {
+  id: number;
+  name: string;
+  description: string;
+  create_at: string;
+  updated_at: string;
+  category_id: string;
+  sub_category: {
+    id: string;
+    name: string;
+    category: {
+      id: string;
+      name: string;
+    };
+  };
+}
+
+export interface ISubCategoryTypeTableAttr {
+  id: number;
+  name: string;
+  description: string;
+  create_at: string;
+  updated_at: string;
+  category: string;
+  sub_category: string;
 }

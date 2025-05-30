@@ -13,7 +13,7 @@ import { DynamicTable } from "@/components/Tables/DynamicTables";
 import { Button } from "@/components/Button";
 import apiService from "@/services/base.services";
 import {
-  ISubCategoryType,
+  ISubCategoryTypeTableAttr,
   ISubCategoryTypeApiResponse,
 } from "@/types/interface";
 import { DEFAULT_PAGINATION } from "@/utils/common";
@@ -27,10 +27,12 @@ const SubCategoryTypePage = () => {
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const [subCategoriesTypes, setSubCategoriesTypes] = useState<
-    ISubCategoryType[]
+    ISubCategoryTypeTableAttr[]
   >([]);
   const [pagination, setPagination] = useState(DEFAULT_PAGINATION);
-  const [sortKey, setSortKey] = useState<keyof ISubCategoryType | "">("");
+  const [sortKey, setSortKey] = useState<keyof ISubCategoryTypeTableAttr | "">(
+    "",
+  );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -79,7 +81,18 @@ const SubCategoryTypePage = () => {
 
         if (res.status === 200) {
           const { items, meta } = res.data.data;
-          setSubCategoriesTypes(items);
+          console.log("abc=> type", items);
+
+          const formattedSubType = items.map((item) => ({
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            create_at: item.create_at,
+            updated_at: item.updated_at,
+            category: item.sub_category.category.name,
+            sub_category: item.sub_category.name,
+          }));
+          setSubCategoriesTypes(formattedSubType);
           setPagination(meta);
         }
       } catch {
@@ -100,7 +113,7 @@ const SubCategoryTypePage = () => {
     setPagination(DEFAULT_PAGINATION);
   };
 
-  const handleSort = (key: keyof ISubCategoryType) => {
+  const handleSort = (key: keyof ISubCategoryTypeTableAttr) => {
     const newOrder = sortKey === key && sortOrder === "asc" ? "desc" : "asc";
     setSortKey(key);
     setSortOrder(newOrder);
@@ -170,19 +183,19 @@ const SubCategoryTypePage = () => {
                 key: "category",
                 label: "Category",
                 sortable: true,
-                render: (_value, row) => row.category?.name ?? "-",
+                render: (_value, row) => row.category ?? "-",
               },
               {
                 key: "sub_category",
                 label: "Subcategory",
                 sortable: true,
-                render: (_value, row) => row.sub_category?.name ?? "-",
+                render: (_value, row) => row.sub_category ?? "-",
               },
               {
                 key: "create_at",
                 label: "Created",
                 sortable: true,
-                render: (val) =>
+                render: (val: unknown) =>
                   typeof val === "string" ||
                   typeof val === "number" ||
                   val instanceof Date
@@ -193,7 +206,7 @@ const SubCategoryTypePage = () => {
                 key: "updated_at",
                 label: "Updated",
                 sortable: true,
-                render: (val) =>
+                render: (val: unknown) =>
                   typeof val === "string" ||
                   typeof val === "number" ||
                   val instanceof Date

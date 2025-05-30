@@ -63,21 +63,6 @@ const CreateUpdateSubCategoryPage = () => {
     enableReinitialize: true,
   });
 
-  const fetchAllCategories = useCallback(async () => {
-    try {
-      setLoadingStates((prev) => ({ ...prev, categoriesLoading: true }));
-      const res: IGetAllCategoriesResponse = await apiService.get(
-        "/all-category",
-        { withAuth: true },
-      );
-      if (res.status === 200) setCategories(res.data.data);
-    } catch {
-      toast.error("Something went wrong, please try again later.");
-    } finally {
-      setLoadingStates((prev) => ({ ...prev, categoriesLoading: false }));
-    }
-  }, []);
-
   const fetchAllSubCategoriesWithId = useCallback(
     async (categoryId: string) => {
       try {
@@ -157,9 +142,8 @@ const CreateUpdateSubCategoryPage = () => {
   };
 
   useEffect(() => {
-    fetchAllCategories();
     if (isEditMode) fetchSubCategoryDetails();
-  }, [isEditMode, fetchAllCategories, fetchSubCategoryDetails]);
+  }, [isEditMode, fetchSubCategoryDetails]);
 
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
     formik;
