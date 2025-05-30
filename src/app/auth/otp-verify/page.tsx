@@ -216,7 +216,7 @@ const OtpVerify = () => {
         } else {
           // Calculate minutes and seconds
           const seconds = Math.floor((remainingTime / 1000) % 60);
-          setOtpLimitCountdown(`${seconds}s`);
+          setOtpLimitCountdown(seconds.toString());
         }
       }, 1000);
     }
