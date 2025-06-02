@@ -13,7 +13,8 @@ interface CustomAxiosRequestConfig extends AxiosRequestConfig {
 
 const apiClient: AxiosInstance = axios.create({
   baseURL:
-    process.env.NEXT_PUBLIC_API_BASE_URL || "https://your-api-url.com/api",
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "https://stylehut-be.vercel.app/api",
   timeout: 10000,
 });
 

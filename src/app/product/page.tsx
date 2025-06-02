@@ -168,13 +168,15 @@ const ProductPage = () => {
                 key: "category",
                 label: "Category",
                 sortable: true,
-                render: (_value, row) => row.category?.name ?? "-",
+                render: (_value, row) =>
+                  row.sub_category_type?.sub_category?.category?.name ?? "-",
               },
               {
                 key: "sub_category",
                 label: "Sub Category",
                 sortable: true,
-                render: (_value, row) => row.sub_category?.name ?? "-",
+                render: (_value, row) =>
+                  row.sub_category_type?.sub_category?.name ?? "-",
               },
               {
                 key: "brand",

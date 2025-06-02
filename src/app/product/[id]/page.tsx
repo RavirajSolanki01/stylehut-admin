@@ -13,9 +13,7 @@ import apiService from "@/services/base.services";
 import { Select } from "@/components/FormElements/select";
 import {
   IBrand,
-  IBrandApiResponse,
-  ICategory,
-  IGetAllCategoriesResponse,
+  IBrandApiInProductResponse,
   IGetAllSubCategoriesType,
   IProduct,
   ISize,
@@ -30,8 +28,6 @@ import { getMaxKeyValue } from "@/utils/common";
 type FormValues = {
   name: string;
   description: string;
-  categoryId: string;
-  subCategoryId: string;
   brandId: string;
   subCategoryTypeId: string;
   price: number;
@@ -44,8 +40,6 @@ type FormValues = {
 const initialFormValues: FormValues = {
   name: "",
   description: "",
-  categoryId: "",
-  subCategoryId: "",
   brandId: "",
   subCategoryTypeId: "",
   price: 0,
@@ -66,8 +60,6 @@ const CreateUpdateProductPage = () => {
     variantId: uuidv4(),
   });
 
-  const [categories, setCategories] = useState<ICategory[]>([]);
-  const [subCategories, setSubCategories] = useState<ICategory[]>([]);
   const [subCategoriesType, setSubCategoriesType] = useState<
     ISubCategoryType[]
   >([]);
@@ -121,12 +113,6 @@ const CreateUpdateProductPage = () => {
         .max(1024, "Description must be 1024 characters or less")
         .min(10, "Description must be at least 10 characters"),
 
-      categoryId: Yup.string().trim().required("Please select a category"),
-
-      subCategoryId: Yup.string()
-        .trim()
-        .required("Please select a subcategory"),
-
       subCategoryTypeId: Yup.string()
         .trim()
         .required("Please select a subcategory type"),
@@ -159,21 +145,6 @@ const CreateUpdateProductPage = () => {
     enableReinitialize: true,
   });
 
-  const fetchAllCategories = useCallback(async () => {
-    try {
-      setLoadingStates((prev) => ({ ...prev, productLoading: true }));
-      const res: IGetAllCategoriesResponse = await apiService.get(
-        "/all-category",
-        { withAuth: true },
-      );
-      if (res.status === 200) setCategories(res.data.data);
-    } catch {
-      toast.error("Something went wrong, please try again later.");
-    } finally {
-      setLoadingStates((prev) => ({ ...prev, productLoading: false }));
-    }
-  }, []);
-
   const fetchAllSizeData = useCallback(async () => {
     try {
       setLoadingStates((prev) => ({ ...prev, productLoading: true }));
@@ -196,49 +167,37 @@ const CreateUpdateProductPage = () => {
     }
   }, []);
 
-  const fetchAllSubCategoriesWithId = useCallback(
-    async (categoryId: string) => {
-      try {
-        setLoadingStates((prev) => ({ ...prev, productLoading: true }));
-        const res: IGetAllCategoriesResponse = await apiService.get(
-          `/all-sub-category?categoryId=${categoryId}`,
-          { withAuth: true },
-        );
-        if (res.status === 200) setSubCategories(res.data.data);
-      } catch {
-        toast.error("Something went wrong, please try again later.");
-      } finally {
-        setLoadingStates((prev) => ({ ...prev, productLoading: false }));
-      }
-    },
-    [],
-  );
+  const fetchAllSubCategoriesType = useCallback(async () => {
+    try {
+      setLoadingStates((prev) => ({ ...prev, productLoading: true }));
+      const res: IGetAllSubCategoriesType = await apiService.get(
+        `/all-sub-category-type`,
+        { withAuth: true },
+      );
+      if (res.status === 200) setSubCategoriesType(res.data.data);
+    } catch {
+      toast.error("Something went wrong, please try again later.");
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, productLoading: false }));
+    }
+  }, []);
 
-  const fetchAllSubCategoriesTypeWithId = useCallback(
-    async (categoryId: string, subCategoryId: string) => {
-      try {
-        setLoadingStates((prev) => ({ ...prev, productLoading: true }));
-        const res: IGetAllSubCategoriesType = await apiService.get(
-          `/sub-category-type?categoryId=${categoryId}&subCategoryId=${subCategoryId}`,
-          { withAuth: true },
-        );
-        if (res.status === 200) setSubCategoriesType(res.data.data.items);
-      } catch {
-        toast.error("Something went wrong, please try again later.");
-      } finally {
-        setLoadingStates((prev) => ({ ...prev, productLoading: false }));
-      }
-    },
-    [],
-  );
+  useEffect(() => {
+    fetchAllBrand();
+    fetchAllSizeData();
+    fetchAllSubCategoriesType();
+  }, []);
 
   const fetchAllBrand = useCallback(async () => {
     try {
       setLoadingStates((prev) => ({ ...prev, productLoading: true }));
-      const res: IBrandApiResponse = await apiService.get(`/brand`, {
-        withAuth: true,
-      });
-      if (res.status === 200) setBrand(res.data.data.items);
+      const res: IBrandApiInProductResponse = await apiService.get(
+        `/all-brand`,
+        {
+          withAuth: true,
+        },
+      );
+      if (res.status === 200) setBrand(res.data.data);
     } catch {
       toast.error("Something went wrong, please try again later.");
     } finally {
@@ -321,7 +280,6 @@ const CreateUpdateProductPage = () => {
           return acc;
         }, {} as any);
 
-
         setSizeQuantity(customObject);
         setPriceOfSize(priceObject);
         setDiscountOfSize(discountObject);
@@ -340,8 +298,6 @@ const CreateUpdateProductPage = () => {
         formik.setValues({
           name: isVariantMode ? "" : name,
           description: isVariantMode ? "" : description,
-          categoryId: String(category.id),
-          subCategoryId: String(sub_category.id),
           brandId: String(brand_id),
           price: Number(price),
           subCategoryTypeId: String(sub_category_type_id),
@@ -351,12 +307,6 @@ const CreateUpdateProductPage = () => {
           size: response.data.data?.size_quantities[0]?.size_data
             ?.name as string,
         });
-
-        fetchAllSubCategoriesWithId(String(category_id));
-        fetchAllSubCategoriesTypeWithId(
-          String(category.id),
-          String(sub_category_id),
-        );
       }
     } catch (error: any) {
       if (error?.response?.status === 404) {
@@ -395,8 +345,6 @@ const CreateUpdateProductPage = () => {
       });
       formData.append("name", values.name);
       formData.append("description", values.description);
-      formData.append("category_id", values.categoryId);
-      formData.append("sub_category_id", values.subCategoryId);
       formData.append("sub_category_type_id", values.subCategoryTypeId);
       formData.append("brand_id", values.brandId);
       formData.append("price", String(values.price));
@@ -446,14 +394,8 @@ const CreateUpdateProductPage = () => {
   };
 
   useEffect(() => {
-    fetchAllCategories();
     if (isEditMode) fetchSubCategoryDetails();
-  }, [isEditMode, fetchAllCategories, fetchSubCategoryDetails]);
-
-  useEffect(() => {
-    fetchAllBrand();
-    fetchAllSizeData();
-  }, []);
+  }, [isEditMode, fetchSubCategoryDetails]);
 
   useEffect(() => {
     // const maxPrice = Math.max(...Object.values(priceOfSize).map(Number))
@@ -467,7 +409,6 @@ const CreateUpdateProductPage = () => {
         ? discountOfSize["discount==" + result?.key.split("price==")[1]]
         : 0,
     );
-
   }, [priceOfSize, discountOfSize]);
 
   const handleSizeQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -542,8 +483,14 @@ const CreateUpdateProductPage = () => {
           size_id: Number(item.split("==")[1]),
           custom_product_id: currentProductData.custom_product_id,
           id: Number(item.split("==")[3]),
-          price: Number(priceOfSize['price==' + item.split("==").slice(1, -1).join("==")]),
-          discount: Number(discountOfSize['discount==' + item.split("==").slice(1, -1).join("==")])
+          price: Number(
+            priceOfSize["price==" + item.split("==").slice(1, -1).join("==")],
+          ),
+          discount: Number(
+            discountOfSize[
+              "discount==" + item.split("==").slice(1, -1).join("==")
+            ],
+          ),
         }));
 
       console.log(
@@ -653,59 +600,6 @@ const CreateUpdateProductPage = () => {
                 error={touched.name && errors.name ? errors.name : ""}
               />
               <Select
-                label="Select Category"
-                className="mb-5 w-full sm:w-9/12 md:w-1/2"
-                name="categoryId"
-                value={values.categoryId}
-                disabled={isFieldDisabled}
-                placeholder="Select category"
-                required
-                items={categories.map((c) => ({
-                  label: c.name,
-                  value: String(c.id),
-                }))}
-                onChange={(e) => {
-                  handleChange(e);
-                  fetchAllSubCategoriesWithId(e.target.value);
-                  setFieldValue("subCategoryId", "");
-                  setFieldValue("subCategoryTypeId", "");
-                }}
-                onBluer={handleBlur}
-                error={
-                  touched.categoryId && errors.categoryId
-                    ? errors.categoryId
-                    : ""
-                }
-              />
-
-              <Select
-                label="Select Subcategory"
-                className="mb-5 w-full sm:w-9/12 md:w-1/2"
-                name="subCategoryId"
-                value={values.subCategoryId}
-                disabled={isFieldDisabled}
-                placeholder="Select subcategory"
-                required
-                items={subCategories.map((c) => ({
-                  label: c.name,
-                  value: String(c.id),
-                }))}
-                onChange={(e) => {
-                  handleChange(e);
-                  fetchAllSubCategoriesTypeWithId(
-                    values.categoryId,
-                    e.target.value,
-                  );
-                  setFieldValue("subCategoryTypeId", "");
-                }}
-                onBluer={handleBlur}
-                error={
-                  touched.subCategoryId && errors.subCategoryId
-                    ? errors.subCategoryId
-                    : ""
-                }
-              />
-              <Select
                 label="Select Subcategory type"
                 className="mb-5 w-full sm:w-9/12 md:w-1/2"
                 name="subCategoryTypeId"
@@ -714,7 +608,12 @@ const CreateUpdateProductPage = () => {
                 placeholder="Select subcategory type"
                 required
                 items={subCategoriesType.map((c) => ({
-                  label: c.name,
+                  label:
+                    c.sub_category.category.name +
+                    " - " +
+                    c.sub_category.name +
+                    " - " +
+                    c.name,
                   value: String(c.id),
                 }))}
                 onChange={handleChange}

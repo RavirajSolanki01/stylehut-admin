@@ -1,6 +1,5 @@
 "use client";
 import { SearchIcon } from "@/assets/icons";
-import { Button } from "@/components/Button";
 import Layout from "@/components/Layouts";
 import { CentralLoader } from "@/components/Loader";
 import { DynamicTable } from "@/components/Tables/DynamicTables";
@@ -8,8 +7,6 @@ import useDebounce from "@/hooks/useDebounce";
 import apiService from "@/services/base.services";
 import { IBrand } from "@/types/interface";
 import { DEFAULT_PAGINATION } from "@/utils/common";
-import dayjs from "dayjs";
-import { Plus } from "lucide-react";
 import Head from "next/head";
 import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -118,14 +115,16 @@ function CartAddedProducts() {
                 key: "category",
                 label: "Category",
                 sortable: false,
-                render: (_value, row) => row?.product?.category?.name ?? "-",
+                render: (_value, row) =>
+                  row?.product?.sub_category_type?.sub_category?.category
+                    ?.name ?? "-",
               },
               {
                 key: "sub_category",
                 label: "Sub Category",
                 sortable: false,
                 render: (_value, row) =>
-                  row?.product?.sub_category?.name ?? "-",
+                  row?.product?.sub_category_type?.sub_category?.name ?? "-",
               },
               {
                 key: "brand",

@@ -170,7 +170,8 @@ const SubCategoryTypePage = () => {
                 key: "category",
                 label: "Category",
                 sortable: true,
-                render: (_value, row) => row.category?.name ?? "-",
+                render: (_value, row) =>
+                  row.sub_category?.category?.name ?? "-",
               },
               {
                 key: "sub_category",

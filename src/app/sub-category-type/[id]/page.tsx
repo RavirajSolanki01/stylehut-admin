@@ -14,20 +14,19 @@ import { Select } from "@/components/FormElements/select";
 import {
   ICategory,
   IGetAllCategoriesResponse,
+  ISubCategory,
   ISubCategoryType,
 } from "@/types/interface";
 
 type FormValues = {
   name: string;
   description: string;
-  categoryId: string;
   subCategoryId: string;
 };
 
 const initialFormValues: FormValues = {
   name: "",
   description: "",
-  categoryId: "",
   subCategoryId: "",
 };
 
@@ -36,8 +35,7 @@ const CreateUpdateSubCategoryPage = () => {
   const { id } = useParams();
   const isEditMode = id !== "new";
 
-  const [categories, setCategories] = useState<ICategory[]>([]);
-  const [subCategories, setSubCategories] = useState<ICategory[]>([]);
+  const [subCategories, setSubCategories] = useState<ISubCategory[]>([]);
   const [loadingStates, setLoadingStates] = useState({
     categoriesLoading: false,
     formSubmitting: false,
@@ -56,21 +54,20 @@ const CreateUpdateSubCategoryPage = () => {
         .required("Description is required")
         .max(1024, "Description must be 1024 characters or less")
         .min(10, "Description must be at least 10 characters"),
-      categoryId: Yup.string().trim().required("Category is required"),
       subCategoryId: Yup.string().trim().required("Subcategory is required"),
     }),
     onSubmit: (values) => handleSubmit(values),
     enableReinitialize: true,
   });
 
-  const fetchAllCategories = useCallback(async () => {
+  const fetchAllSubCategoriesWithId = useCallback(async () => {
     try {
       setLoadingStates((prev) => ({ ...prev, categoriesLoading: true }));
       const res: IGetAllCategoriesResponse = await apiService.get(
-        "/all-category",
+        `/all-sub-category`,
         { withAuth: true },
       );
-      if (res.status === 200) setCategories(res.data.data);
+      if (res.status === 200) setSubCategories(res.data.data);
     } catch {
       toast.error("Something went wrong, please try again later.");
     } finally {
@@ -78,23 +75,9 @@ const CreateUpdateSubCategoryPage = () => {
     }
   }, []);
 
-  const fetchAllSubCategoriesWithId = useCallback(
-    async (categoryId: string) => {
-      try {
-        setLoadingStates((prev) => ({ ...prev, categoriesLoading: true }));
-        const res: IGetAllCategoriesResponse = await apiService.get(
-          `/all-sub-category?categoryId=${categoryId}`,
-          { withAuth: true },
-        );
-        if (res.status === 200) setSubCategories(res.data.data);
-      } catch {
-        toast.error("Something went wrong, please try again later.");
-      } finally {
-        setLoadingStates((prev) => ({ ...prev, categoriesLoading: false }));
-      }
-    },
-    [],
-  );
+  useEffect(() => {
+    fetchAllSubCategoriesWithId();
+  }, []);
 
   const fetchSubCategoryDetails = useCallback(async () => {
     try {
@@ -103,15 +86,12 @@ const CreateUpdateSubCategoryPage = () => {
           withAuth: true,
         });
       if (response.status === 200) {
-        const { name, description, category, sub_category } =
-          response.data.data;
+        const { name, description, sub_category } = response.data.data;
         formik.setValues({
           name,
           description,
-          categoryId: String(category.id),
           subCategoryId: String(sub_category.id),
         });
-        fetchAllSubCategoriesWithId(category.id);
       }
     } catch (error: any) {
       if (error?.response?.status === 404) {
@@ -136,7 +116,6 @@ const CreateUpdateSubCategoryPage = () => {
     try {
       const payload = {
         ...values,
-        categoryId: Number(values.categoryId),
         subCategoryId: Number(values.subCategoryId),
       };
       const response = await method(endpoint, payload, { withAuth: true });
@@ -157,35 +136,24 @@ const CreateUpdateSubCategoryPage = () => {
   };
 
   useEffect(() => {
-    fetchAllCategories();
     if (isEditMode) fetchSubCategoryDetails();
-  }, [isEditMode, fetchAllCategories, fetchSubCategoryDetails]);
+  }, [isEditMode]);
 
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
     formik;
 
   useEffect(() => {
-    if (values.name && values.categoryId && values.subCategoryId) {
-      const selectedCategory = categories.find(
-        (cat) => String(cat.id) === values.categoryId,
-      );
+    if (values.name && values.subCategoryId) {
       const selectedSubCategory = subCategories.find(
         (subCat) => String(subCat.id) === values.subCategoryId,
       );
 
-      if (selectedCategory && selectedSubCategory) {
-        const autoDescription = `${selectedSubCategory.name} ${values.name} for ${selectedCategory.name}`;
+      if (selectedSubCategory) {
+        const autoDescription = `${selectedSubCategory.name} ${values.name} for ${selectedSubCategory.category?.name}`;
         setFieldValue("description", autoDescription);
       }
     }
-  }, [
-    values.name,
-    values.categoryId,
-    values.subCategoryId,
-    categories,
-    subCategories,
-    setFieldValue,
-  ]);
+  }, [values.name, values.subCategoryId, subCategories, setFieldValue]);
 
   return (
     <>
@@ -212,30 +180,6 @@ const CreateUpdateSubCategoryPage = () => {
               />
 
               <Select
-                label="Select Category"
-                className="mb-5 w-full sm:w-9/12 md:w-1/2"
-                name="categoryId"
-                value={values.categoryId}
-                placeholder="Select category"
-                required
-                items={categories.map((c) => ({
-                  label: c.name,
-                  value: String(c.id),
-                }))}
-                onChange={(e) => {
-                  handleChange(e);
-                  fetchAllSubCategoriesWithId(e.target.value);
-                  setFieldValue("subCategoryId", "");
-                }}
-                onBluer={handleBlur}
-                error={
-                  touched.categoryId && errors.categoryId
-                    ? errors.categoryId
-                    : ""
-                }
-              />
-
-              <Select
                 label="Select Subcategory"
                 className="mb-5 w-full sm:w-9/12 md:w-1/2"
                 name="subCategoryId"
@@ -243,7 +187,7 @@ const CreateUpdateSubCategoryPage = () => {
                 placeholder="Select subcategory"
                 required
                 items={subCategories.map((c) => ({
-                  label: c.name,
+                  label: c.category?.name + " - " + c.name,
                   value: String(c.id),
                 }))}
                 onChange={handleChange}

@@ -37,7 +37,7 @@ export interface ISubCategoryApiResponse {
 }
 
 export interface IGetAllCategoriesResponse {
-  data: { data: ICategory[] };
+  data: { data: ISubCategory[] };
   status: number;
 }
 
@@ -53,21 +53,21 @@ export interface IBrandApiResponse {
   status: number;
 }
 
+export interface IBrandApiInProductResponse {
+  data: { data: IBrand[] };
+  status: number;
+}
+
 export interface ISubCategoryType {
   id: number;
   name: string;
   description: string;
   create_at: string;
   updated_at: string;
-  category_id: string;
-  category: {
-    id: string;
-    name: string;
+  sub_category: ISubCategory & {
+    category: ICategory;
   };
-  sub_category: {
-    id: string;
-    name: string;
-  };
+  category?: string;
 }
 
 export interface ISubCategoryTypeApiResponse {
@@ -102,7 +102,7 @@ export interface ApiResponse<T> {
 }
 
 export interface IGetAllSubCategoriesType {
-  data: { data: { items: ISubCategoryType[]; meta: IPaginationData } };
+  data: { data: ISubCategoryType[] };
   status: number;
 }
 
@@ -132,9 +132,11 @@ export interface IProduct {
   create_at: string;
   updated_at: string;
   is_deleted: boolean;
-  category: ICategory;
-  sub_category: ISubCategory;
-  sub_category_type: ISubCategoryType;
+  category: string;
+  sub_category: string;
+  sub_category_type: ISubCategoryType & {
+    sub_category: ISubCategory & { category: ICategory };
+  };
   brand: IBrand;
   variant_id: string;
   relatedProducts: IProduct[];
@@ -278,9 +280,11 @@ export interface IWishlist {
     price: string;
     discount: number;
     image: string[];
-    category: ICategory;
-    sub_category: ISubCategory;
-    sub_category_type: ISubCategoryType;
+    sub_category_type: ISubCategoryType & {
+      sub_category: ISubCategory & {
+        category: ICategory;
+      };
+    };
     brand: IBrand;
   };
   unique_users_count: number;
