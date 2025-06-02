@@ -229,8 +229,7 @@ const ProductPage = () => {
             ]}
             actions={(row) => (
               <div className="flex items-center justify-end gap-x-3">
-                <button
-                  title="plus"
+                <button title="add variant"
                   className="hover:text-primary"
                   onClick={() => handleAddVariant(row.id)}
                 >
