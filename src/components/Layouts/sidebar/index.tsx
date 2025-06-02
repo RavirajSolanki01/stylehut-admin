@@ -48,33 +48,18 @@ export function Sidebar() {
   const navData = NAV_DATA.map((section) => {
     const newSection = { ...section };
     newSection.items = [...section.items];
-  
-    if (isSuperAdmin) {
-      const insertAfterTitle = "Users";
-      const index = newSection.items.findIndex(
-        (item) => item.title === insertAfterTitle
-      );
-  
-      if (index !== -1) {
-        newSection.items.splice(index + 1, 0, {
-          icon: Icons.PendingRequestIcon,
-          items: [],
-          title: "Pending Requests",
-          url: "/pending-admin-requests",
-        });
-      } else {  
-        newSection.items.push({
-          icon: Icons.PendingRequestIcon,
-          items: [],
-          title: "Pending Requests",
-          url: "/pending-admin-requests",
-        });
-      }
+
+    if (isSuperAdmin && section.label === "User Management") {
+      newSection.items.push({
+        icon: Icons.PendingRequestIcon,
+        items: [],
+        title: "Pending Requests",
+        url: "/pending-admin-requests",
+      });
     }
-  
+
     return newSection;
   });
-  
 
   return (
     <>
