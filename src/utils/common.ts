@@ -61,3 +61,56 @@ export function getMaxKeyValue(
 
   return maxKey !== null ? { key: maxKey, value: maxValue } : null;
 }
+
+export function transformSizesWithUniqueIds(
+  topWearSizes: any,
+  name: string,
+  type: string,
+) {
+  const size_data = [];
+  const size_chart_data = [];
+
+  for (const item of topWearSizes) {
+    const { size, additionalFields } = item;
+    const custom_size_id = crypto.randomUUID();
+
+    size_data.push({
+      name: name,
+      size: type == "footwear" ? item.ukSize : size,
+      type,
+      has_size_chart: true,
+      custom_size_id: custom_size_id,
+    });
+
+    
+
+    if (type == "footwear") {
+      const arr = [
+        { label: "US", value: item.usSize },
+        { label: "EURO", value: item.euroSize },
+        { label: "To Fit Foot Length", value: item.actualSize },
+      ];
+
+      for (const field of arr) {
+        size_chart_data.push({
+          custom_size_id: custom_size_id,
+          size_field_name: field.label,
+          size_field_value: field.value,
+        });
+      }
+    }else{
+      for (const field of additionalFields) {
+        size_chart_data.push({
+          custom_size_id: custom_size_id,
+          size_field_name: field.label,
+          size_field_value: field.value,
+        });
+      }
+    }
+  }
+
+  return {
+    size_data,
+    size_chart_data,
+  };
+}
