@@ -66,6 +66,7 @@ export function transformSizesWithUniqueIds(
   topWearSizes: any,
   name: string,
   type: string,
+  is_cm: boolean,
 ) {
   const size_data = [];
   const size_chart_data = [];
@@ -80,6 +81,7 @@ export function transformSizesWithUniqueIds(
       type,
       has_size_chart: true,
       custom_size_id: custom_size_id,
+      is_cm: is_cm,
     });
 
     
