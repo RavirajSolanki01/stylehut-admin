@@ -377,15 +377,7 @@ const SizeDialog = ({
       if (nameError) {
         return;
       }
-      console.log("Form Values:", {
-        name: values.name,
-        includeSizeChart: values.includeSizeChart,
-        wearType: values.wearType,
-        topwearSizes: values.topwearSizes,
-        bottomwearSizes: values.bottomwearSizes,
-        footwearSizes: values.footwearSizes,
-        sizes: values.sizes,
-      });
+    
 
       const response = await apiService.post(
         `/size`,
@@ -394,18 +386,21 @@ const SizeDialog = ({
               values.topwearSizes,
               values.name,
               "topwear",
+              unit == "cm",
             )
           : values.wearType == "footwear"
             ? transformSizesWithUniqueIds(
                 values.footwearSizes,
                 values.name,
                 "footwear",
+                unit == "cm",
               )
             : values.wearType == "bottomwear"
               ? transformSizesWithUniqueIds(
                   values.bottomwearSizes,
                   values.name,
                   "bottomwear",
+                  unit == "cm",
                 )
               : {
                   size_data: values.sizes.map((item: any) => ({
@@ -428,6 +423,9 @@ const SizeDialog = ({
       console.error("Form submission error:", error);
     } finally {
       setSubmitting(false);
+      setWearType("");
+      setIncludeSizeChart(false);
+      setUnit("cm");
     }
   };
 
@@ -444,6 +442,7 @@ const SizeDialog = ({
             onSubmit={handleSubmit}
             validateOnChange={true}
             validateOnBlur={true}
+            
           >
             {({
               values,
