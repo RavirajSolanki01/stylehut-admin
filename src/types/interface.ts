@@ -58,6 +58,11 @@ export interface IBrandApiInProductResponse {
   status: number;
 }
 
+export interface IProductBrandApiResponse {
+  data: { data: IBrand[] };
+  status: number;
+}
+
 export interface ISubCategoryType {
   id: number;
   name: string;

@@ -16,6 +16,7 @@ import {
   IBrandApiInProductResponse,
   IGetAllSubCategoriesType,
   IProduct,
+  IProductBrandApiResponse,
   ISize,
   ISizeApiResponse,
   ISubCategoryType,
@@ -185,16 +186,15 @@ const CreateUpdateProductPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchAllBrand();
     fetchAllSizeData();
     fetchAllSubCategoriesType();
   }, []);
 
-  const fetchAllBrand = useCallback(async () => {
+  const fetchAllBrand = useCallback(async (subCategoryId: string) => {
     try {
       setLoadingStates((prev) => ({ ...prev, productLoading: true }));
-      const res: IBrandApiInProductResponse = await apiService.get(
-        `/all-brand`,
+      const res: IProductBrandApiResponse = await apiService.get(
+        `/sub-category/brand/${subCategoryId}`,
         {
           withAuth: true,
         },
@@ -221,10 +221,6 @@ const CreateUpdateProductPage = () => {
         const {
           name,
           description,
-          category,
-          sub_category,
-          category_id,
-          sub_category_id,
           sub_category_type_id,
           brand_id,
           price,
@@ -235,6 +231,7 @@ const CreateUpdateProductPage = () => {
           size_quantities,
           variant_id,
           custom_product_id,
+          sub_category_type,
         } = response.data.data;
         setCurrentProductData({
           custom_product_id: custom_product_id,
@@ -300,6 +297,8 @@ const CreateUpdateProductPage = () => {
         setResSizeType(
           response.data.data?.size_quantities[0]?.size_data?.name as string,
         );
+
+        fetchAllBrand(String(sub_category_type.sub_category.id));
 
         formik.setValues({
           name: isVariantMode ? "" : name,
@@ -626,7 +625,16 @@ const CreateUpdateProductPage = () => {
                     c.name,
                   value: String(c.id),
                 }))}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  const subCategoryTypeId = e.target.value;
+                  const subCategoryType = subCategoriesType.find(
+                    (c) => c.id === Number(subCategoryTypeId),
+                  );
+                  if (subCategoryType?.sub_category.id) {
+                    fetchAllBrand(String(subCategoryType?.sub_category.id));
+                  }
+                }}
                 onBluer={handleBlur}
                 error={
                   touched.subCategoryTypeId && errors.subCategoryTypeId
