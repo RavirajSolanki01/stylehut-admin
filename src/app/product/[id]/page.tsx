@@ -24,6 +24,7 @@ import { ImageUpload } from "@/components/FormElements/InputGroup/upload-file";
 import { fileValidation } from "@/utils/schema";
 import { shouldEnableButton } from "@/utils/button-toggler";
 import { getMaxKeyValue } from "@/utils/common";
+import SizeDialog from "./SizeDialog";
 
 type FormValues = {
   name: string;
@@ -97,6 +98,7 @@ const CreateUpdateProductPage = () => {
   const [isSizeChanged, setIsSizeChanged] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [_, setHasPrice] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const formik = useFormik<FormValues>({
     initialValues: initialFormValues,
@@ -244,8 +246,12 @@ const CreateUpdateProductPage = () => {
         } else if (isEditMode && isVariantMode) {
           setMainProduct([...relatedProducts, response.data.data]);
         }
-        setHasPrice(!!size_quantities.find((item) => item.price > 0)?.price);
-        setEnabled(!!size_quantities.find((item) => item.price > 0)?.price);
+        setHasPrice(
+          !!size_quantities.find((item) => Number(item.price) > 0)?.price,
+        );
+        setEnabled(
+          !!size_quantities.find((item) => Number(item.price) > 0)?.price,
+        );
 
         const customObject = size_quantities.reduce((acc, item) => {
           const sizeId = item.size_data.id;
@@ -398,18 +404,18 @@ const CreateUpdateProductPage = () => {
   }, [isEditMode, fetchSubCategoryDetails]);
 
   useEffect(() => {
-    // const maxPrice = Math.max(...Object.values(priceOfSize).map(Number))
-    const result = getMaxKeyValue(priceOfSize);
-
-    setFieldValue("price", result?.value);
-
-    setFieldValue(
-      "discount",
-      result?.key
-        ? discountOfSize["discount==" + result?.key.split("price==")[1]]
-        : 0,
-    );
-  }, [priceOfSize, discountOfSize]);
+    // Only update price from priceOfSize if we're in dynamic pricing mode and have values
+    if (enabled && Object.keys(priceOfSize).length > 0) {
+      const result = getMaxKeyValue(priceOfSize);
+      formik.setFieldValue("price", result?.value);
+      formik.setFieldValue(
+        "discount",
+        result?.key
+          ? discountOfSize["discount==" + result?.key.split("price==")[1]]
+          : 0,
+      );
+    }
+  }, [priceOfSize, discountOfSize, enabled]);
 
   const handleSizeQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -422,7 +428,6 @@ const CreateUpdateProductPage = () => {
     const { name, value } = e.target;
     setPriceOfSize((prev) => ({ ...prev, [name]: value }));
     setIsSizeChanged(true);
-    console.log(priceOfSize, ">><< priceOfSize");
   };
 
   const handleDiscountOfSizeChange = (
@@ -431,7 +436,6 @@ const CreateUpdateProductPage = () => {
     const { name, value } = e.target;
     setDiscountOfSize((prev) => ({ ...prev, [name]: value }));
     setIsSizeChanged(true);
-    console.log(discountOfSize, ">><< discountOfSizeZie");
   };
 
   const handleSizePrice = () => {
@@ -440,10 +444,19 @@ const CreateUpdateProductPage = () => {
     setDiscountOfSize({});
   };
 
+  const handleSizeDropdown = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (e.target.value == "addMore") {
+      setIsAddDialogOpen(true);
+    } else {
+      formik.handleChange(e);
+      setSizeType(e.target.value);
+      setSizeQuantity({});
+      setPriceOfSize({});
+    }
+  };
+
   // Add size  / Save size button
   const handleAddSizeQuantityData = async () => {
-    console.log("add size quantity data");
-
     const sizeQuantityData = size
       .filter((item) => item.name === sizeType)
       .map((item) => "quantity==" + item.id + "==" + item.size);
@@ -483,24 +496,21 @@ const CreateUpdateProductPage = () => {
           size_id: Number(item.split("==")[1]),
           custom_product_id: currentProductData.custom_product_id,
           id: Number(item.split("==")[3]),
-          price: Number(
-            priceOfSize["price==" + item.split("==").slice(1, -1).join("==")],
-          ),
-          discount: Number(
-            discountOfSize[
-              "discount==" + item.split("==").slice(1, -1).join("==")
-            ],
-          ),
+          price: enabled
+            ? Number(
+                priceOfSize[
+                  "price==" + item.split("==").slice(1, -1).join("==")
+                ],
+              )
+            : 0,
+          discount: enabled
+            ? Number(
+                discountOfSize[
+                  "discount==" + item.split("==").slice(1, -1).join("==")
+                ],
+              )
+            : 0,
         }));
-
-      console.log(
-        "anotherSizeQuantity=>",
-        anotherSizeQuantity,
-        "priceOfSize=>",
-        priceOfSize,
-        "discountOfSize=>",
-        discountOfSize,
-      );
 
       let response;
 
@@ -587,7 +597,7 @@ const CreateUpdateProductPage = () => {
                 </div>
               )}
               <InputGroup
-                className="mb-5 w-full sm:w-9/12 md:w-1/2"
+                className="mb-5 w-full lg:w-1/2"
                 type="text"
                 name="name"
                 label="Name"
@@ -601,7 +611,7 @@ const CreateUpdateProductPage = () => {
               />
               <Select
                 label="Select Subcategory type"
-                className="mb-5 w-full sm:w-9/12 md:w-1/2"
+                className="mb-5 w-full lg:w-1/2"
                 name="subCategoryTypeId"
                 value={values.subCategoryTypeId}
                 disabled={isFieldDisabled}
@@ -626,7 +636,7 @@ const CreateUpdateProductPage = () => {
               />
               <Select
                 label="Select Brand"
-                className="mb-5 w-full sm:w-9/12 md:w-1/2"
+                className="mb-5 w-full lg:w-1/2"
                 name="brandId"
                 value={values.brandId}
                 disabled={isFieldDisabled}
@@ -641,8 +651,8 @@ const CreateUpdateProductPage = () => {
                 error={touched.brandId && errors.brandId ? errors.brandId : ""}
               />
               <InputGroup
-                className="mb-5 w-full sm:w-9/12 md:w-1/2"
-                type="number"
+                className="mb-5 w-full lg:w-1/2"
+                type="string"
                 name="price"
                 label="Price"
                 disabled={enabled}
@@ -657,7 +667,7 @@ const CreateUpdateProductPage = () => {
               />
 
               <InputGroup
-                className="mb-5 w-full sm:w-9/12 md:w-1/2"
+                className="mb-5 w-full lg:w-1/2"
                 type="number"
                 name="discount"
                 label="Discount"
@@ -678,27 +688,28 @@ const CreateUpdateProductPage = () => {
 
               <Select
                 label="Size"
-                className="mb-3 w-full sm:w-9/12 md:w-1/2"
+                className="mb-3 w-full lg:w-1/2"
                 name="size"
                 value={values.size}
                 placeholder="Select size"
                 disabled={isFieldDisabled}
                 required
-                items={Array.from(
-                  new Map(size.map((item) => [item.name, item])).values(),
-                ).map((item) => ({
-                  label: item.name,
-                  value: item.name,
-                }))}
+                items={[
+                  ...Array.from(
+                    new Map(size.map((item) => [item.name, item])).values(),
+                  ).map((item) => ({
+                    label: item.name,
+                    value: item.name,
+                  })),
+                  { label: "+ Add more", value: "addMore" },
+                ]}
                 onChange={(e) => {
-                  handleChange(e);
-                  setSizeType(e.target.value);
-                  setSizeQuantity({});
-                  setPriceOfSize({});
+                  handleSizeDropdown(e);
                 }}
                 onBluer={handleBlur}
                 error={touched.size && errors.size ? errors.size : ""}
               />
+
               {sizeType !== "" && (
                 <div className="mb-2 flex items-center gap-2">
                   <button
@@ -719,10 +730,27 @@ const CreateUpdateProductPage = () => {
                 </div>
               )}
               <div>
+                {sizeType !== "" && (
+                  <div className="grid lg:grid-cols-2">
+                    <div className="grid grid-cols-4">
+                      <div className="text-center">Size</div>
+                      <div className="">Quantity</div>
+                      {enabled && (
+                        <>
+                          <div>Price</div>
+                          <div>Discount</div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
                 {size.map((item, index) =>
                   item.name === sizeType ? (
-                    <div key={index} className="mb-1 grid grid-cols-2 gap-2">
-                      <div className="grid w-full grid-cols-5 gap-2">
+                    <div
+                      key={index}
+                      className="mb-1 grid grid-cols-1 gap-2 lg:grid-cols-2"
+                    >
+                      <div className="grid w-full grid-cols-4 gap-2">
                         <div
                           key={item.id}
                           className="col-span-1 flex h-10 min-w-10 items-center justify-center rounded-full border p-2 text-center text-sm font-medium"
@@ -804,7 +832,7 @@ const CreateUpdateProductPage = () => {
               </div>
 
               <ImageUpload
-                className="mb-5 w-full sm:w-9/12 md:w-1/2"
+                className="mb-5 w-full lg:w-1/2"
                 name="images"
                 value={formik.values.images}
                 onChange={(files) => formik.setFieldValue("images", files)}
@@ -816,7 +844,7 @@ const CreateUpdateProductPage = () => {
                 }
               />
               <TextAreaGroup
-                className="mb-5.5 w-full sm:w-9/12 md:w-1/2"
+                className="mb-5.5 w-full lg:w-1/2"
                 label="Description"
                 name="description"
                 maxLength={1024}
@@ -864,6 +892,12 @@ const CreateUpdateProductPage = () => {
             </form>
           </div>
         </div>
+        {/* <CommonDialog onConfirm={()=>{}} onOpenChange={()=>{}} open={isAddDialogOpen}  /> */}
+        <SizeDialog
+          onOpenChange={() => setIsAddDialogOpen((pre) => !pre)}
+          open={isAddDialogOpen}
+          refreshSizeList={fetchAllSizeData}
+        />
       </Layout>
     </>
   );
