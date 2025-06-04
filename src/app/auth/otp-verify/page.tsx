@@ -223,7 +223,6 @@ const OtpVerify = () => {
 
     return () => clearInterval(interval);
   }, [otpLimitExpiry]);
-  console.log("abc=>", otpLimitCountdown, otpLimitExpiry);
 
   useEffect(() => {
     fetchOtpExpiryLimit();
@@ -260,7 +259,7 @@ const OtpVerify = () => {
           <div className="flex w-full justify-center">
             <button
               className={`mb-2 mt-[25px] text-center text-sm font-medium ${
-                otpLimitExpiryErr ||
+                otpLimitExpiryErr === "" ||
                 (resendOtpLimitExpiry !== "" &&
                   new Date(resendOtpLimitExpiry) > new Date())
                   ? "opacity-75"
@@ -269,7 +268,7 @@ const OtpVerify = () => {
               type="button"
               onClick={resendOtp}
               disabled={
-                otpLimitExpiryErr !== "" ||
+                otpLimitExpiryErr === "" ||
                 (resendOtpLimitExpiry !== "" &&
                   new Date(resendOtpLimitExpiry) > new Date())
               }
