@@ -54,6 +54,8 @@ const Login = () => {
         toast.error(message);
       } else if (error.status === 409) {
         toast.error("This user already used in consumer side");
+      } else if(error.status === 429){
+        toast.error(error.response.data.message);
       } else {
         toast.error("Something went wrong, please try again later.");
       }
