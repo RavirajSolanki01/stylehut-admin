@@ -18,7 +18,6 @@ import useDebounce from "@/hooks/useDebounce";
 import { CentralLoader } from "@/components/Loader";
 import CommonDialog from "@/components/Dialog/CommonDialog";
 import ImageHoverPreview from "@/components/ImageHoverPreview";
-import { error } from "console";
 
 const ProductPage = () => {
   const router = useRouter();
@@ -183,12 +182,6 @@ const ProductPage = () => {
                 render: (_value, row) => row.brand.name ?? "-",
               },
               {
-                key: "quantity",
-                label: "Quantity",
-                sortable: true,
-                render: (_value, row) => row.quantity ?? "0",
-              },
-              {
                 key: "discount",
                 label: "Discount",
                 sortable: true,
@@ -229,7 +222,8 @@ const ProductPage = () => {
             ]}
             actions={(row) => (
               <div className="flex items-center justify-end gap-x-3">
-                <button title="add variant"
+                <button
+                  title="add variant"
                   className="hover:text-primary"
                   onClick={() => handleAddVariant(row.id)}
                 >
