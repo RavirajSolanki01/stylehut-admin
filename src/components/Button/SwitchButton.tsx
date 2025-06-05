@@ -39,11 +39,18 @@ const SwitchButton: React.FC<SwitchButtonProps> = ({
         }`}
       >
         <span
-          className={`inline-flex h-4 w-4 transform items-center justify-center rounded-full bg-white text-[10px] font-medium transition-transform duration-300 ${
-            enabled ? "translate-x-6" : "translate-x-1"
+          className={`absolute left-1 inline-flex h-4 w-4 items-center justify-center text-[10px] font-medium transition-all duration-300 ${
+            enabled ? "opacity-30" : "opacity-100 bg-white rounded-full"
           }`}
         >
-          {enabled ? rightText : leftText}
+          {leftText}
+        </span>
+        <span
+          className={`absolute right-1 inline-flex h-4 w-4 items-center justify-center text-[10px] font-medium transition-all duration-300 ${
+            enabled ? "opacity-100 bg-white rounded-full" : "opacity-30"
+          }`}
+        >
+          {rightText}
         </span>
       </button>
       {label && <span>{label}</span>}
