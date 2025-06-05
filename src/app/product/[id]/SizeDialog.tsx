@@ -788,9 +788,7 @@ const SizeDialog = ({
                                     <Field
                                       name={`footwearSizes.${index}.ukSize`}
                                       placeholder="Enter UK Size"
-                                      type="number"
-                                      step="0.01"
-                                      min="1"
+                                      type="text"
                                       className="w-full rounded-md border border-gray-300 p-2"
                                     />
                                     <ErrorMessage
@@ -807,9 +805,7 @@ const SizeDialog = ({
                                       name={`footwearSizes.${index}.usSize`}
                                       placeholder="Enter US Size"
                                       className="w-full rounded-md border border-gray-300 p-2"
-                                      type="number"
-                                      step="0.01"
-                                      min="1"
+                                      type="text"
                                     />
                                     <ErrorMessage
                                       name={`footwearSizes.${index}.usSize`}
@@ -823,9 +819,7 @@ const SizeDialog = ({
                                     </label>
                                     <Field
                                       name={`footwearSizes.${index}.euroSize`}
-                                      type="number"
-                                      step="0.01"
-                                      min="1"
+                                      type="text"
                                       placeholder="Enter EURO Size"
                                       className="w-full rounded-md border border-gray-300 p-2"
                                     />
@@ -842,9 +836,7 @@ const SizeDialog = ({
                                   </label>
                                   <Field
                                     name={`footwearSizes.${index}.actualSize`}
-                                    type="number"
-                                    step="0.01"
-                                    min="1"
+                                    type="text"
                                     placeholder={`Enter Actual Size in ${unit}`}
                                     className="w-full rounded-md border border-gray-300 p-2"
                                   />
@@ -899,9 +891,7 @@ const SizeDialog = ({
                                               <div className="flex-1">
                                                 <Field
                                                   name={`footwearSizes.${index}.additionalFields.${fieldIndex}.value`}
-                                                  type="number"
-                                                  step="0.01"
-                                                  min="1"
+                                                  type="text"
                                                   placeholder={`Enter value in ${unit}`}
                                                   className="w-full rounded-md border border-gray-300 p-2"
                                                 />
@@ -1101,9 +1091,7 @@ const SizeDialog = ({
                                               <div className="flex-1">
                                                 <Field
                                                   name={`bottomwearSizes.${index}.additionalFields.${fieldIndex}.value`}
-                                                  type="number"
-                                                  step="0.01"
-                                                  min="1"
+                                                  type="text"
                                                   placeholder={`Enter value in ${unit}`}
                                                   className="w-full rounded-md border border-gray-300 p-2"
                                                 />
@@ -1298,9 +1286,7 @@ const SizeDialog = ({
                                               <div className="flex-1">
                                                 <Field
                                                   name={`topwearSizes.${index}.additionalFields.${fieldIndex}.value`}
-                                                  type="number"
-                                                  step="0.01"
-                                                  min="1"
+                                                  type="text"
                                                   placeholder={`Enter value in ${unit}`}
                                                   className="w-full rounded-md border border-gray-300 p-2"
                                                 />
