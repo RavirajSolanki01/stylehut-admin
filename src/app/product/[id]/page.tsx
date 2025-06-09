@@ -13,12 +13,14 @@ import apiService from "@/services/base.services";
 import { Select } from "@/components/FormElements/select";
 import {
   IBrand,
-  IBrandApiInProductResponse,
+  ICategory,
+  IGetAllCategoriesResponse,
   IGetAllSubCategoriesType,
   IProduct,
   IProductBrandApiResponse,
   ISize,
   ISizeApiResponse,
+  ISubCategory,
   ISubCategoryType,
 } from "@/types/interface";
 import { ImageUpload } from "@/components/FormElements/InputGroup/upload-file";
@@ -37,6 +39,8 @@ type FormValues = {
   quantity: number;
   images: string[] | File[];
   size: string;
+  categoryId: string;
+  subCategoryId: string;
 };
 
 const initialFormValues: FormValues = {
@@ -49,6 +53,8 @@ const initialFormValues: FormValues = {
   images: [],
   discount: 0,
   size: "",
+  categoryId: "",
+  subCategoryId: "",
 };
 
 const CreateUpdateProductPage = () => {
@@ -56,6 +62,9 @@ const CreateUpdateProductPage = () => {
   const { id } = useParams();
   const isEditMode = id !== "new";
   const isVariantMode = (id as string)?.startsWith("new_variant");
+
+  const [categories, setCategories] = useState<ICategory[]>([]);
+  const [subCategories, setSubCategories] = useState<ISubCategory[]>([]);
 
   const [{ customProductId, variantId }, setCustomProductVariantId] = useState({
     customProductId: uuidv4(),
@@ -115,6 +124,11 @@ const CreateUpdateProductPage = () => {
         .required("Description is required")
         .max(1024, "Description must be 1024 characters or less")
         .min(10, "Description must be at least 10 characters"),
+      categoryId: Yup.string().trim().required("Please select a category"),
+
+      subCategoryId: Yup.string()
+        .trim()
+        .required("Please select a subcategory"),
 
       subCategoryTypeId: Yup.string()
         .trim()
@@ -148,6 +162,58 @@ const CreateUpdateProductPage = () => {
     enableReinitialize: true,
   });
 
+  const fetchAllCategories = useCallback(async () => {
+    try {
+      setLoadingStates((prev) => ({ ...prev, productLoading: true }));
+      const res: IGetAllCategoriesResponse = await apiService.get(
+        "/all-category",
+        { withAuth: true },
+      );
+      if (res.status === 200) setCategories(res.data.data);
+    } catch {
+      toast.error("Something went wrong, please try again later.");
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, productLoading: false }));
+    }
+  }, []);
+
+  const fetchAllSubCategoriesWithId = useCallback(
+    async (categoryId: string) => {
+      try {
+        setLoadingStates((prev) => ({ ...prev, productLoading: true }));
+        const res: IGetAllCategoriesResponse = await apiService.get(
+          `/all-sub-category?categoryId=${categoryId}`,
+          { withAuth: true },
+        );
+        if (res.status === 200) setSubCategories(res.data.data);
+      } catch {
+        toast.error("Something went wrong, please try again later.");
+      } finally {
+        setLoadingStates((prev) => ({ ...prev, productLoading: false }));
+      }
+    },
+    [],
+  );
+
+  const fetchAllSubCategoriesTypeWithId = useCallback(
+    async (subCategoryId: string) => {
+      try {
+        setLoadingStates((prev) => ({ ...prev, productLoading: true }));
+        const res: IGetAllSubCategoriesType = await apiService.get(
+          `/all-sub-category-type?subCategoryId=${subCategoryId}`,
+          { withAuth: true },
+        );
+        console.log(res);
+        if (res.status === 200) setSubCategoriesType(res.data.data);
+      } catch {
+        toast.error("Something went wrong, please try again later.");
+      } finally {
+        setLoadingStates((prev) => ({ ...prev, productLoading: false }));
+      }
+    },
+    [],
+  );
+
   const fetchAllSizeData = useCallback(async () => {
     try {
       setLoadingStates((prev) => ({ ...prev, productLoading: true }));
@@ -170,24 +236,8 @@ const CreateUpdateProductPage = () => {
     }
   }, []);
 
-  const fetchAllSubCategoriesType = useCallback(async () => {
-    try {
-      setLoadingStates((prev) => ({ ...prev, productLoading: true }));
-      const res: IGetAllSubCategoriesType = await apiService.get(
-        `/all-sub-category-type`,
-        { withAuth: true },
-      );
-      if (res.status === 200) setSubCategoriesType(res.data.data);
-    } catch {
-      toast.error("Something went wrong, please try again later.");
-    } finally {
-      setLoadingStates((prev) => ({ ...prev, productLoading: false }));
-    }
-  }, []);
-
   useEffect(() => {
     fetchAllSizeData();
-    fetchAllSubCategoriesType();
   }, []);
 
   const fetchAllBrand = useCallback(async (subCategoryId: string) => {
@@ -305,6 +355,8 @@ const CreateUpdateProductPage = () => {
           description: isVariantMode ? "" : description,
           brandId: String(brand_id),
           price: Number(price),
+          categoryId: String(sub_category_type.sub_category.category.id),
+          subCategoryId: String(sub_category_type.sub_category.id),
           subCategoryTypeId: String(sub_category_type_id),
           quantity,
           images: isVariantMode ? [] : image,
@@ -312,6 +364,13 @@ const CreateUpdateProductPage = () => {
           size: response.data.data?.size_quantities[0]?.size_data
             ?.name as string,
         });
+
+        fetchAllSubCategoriesWithId(
+          String(sub_category_type.sub_category.category.id),
+        );
+        fetchAllSubCategoriesTypeWithId(
+          String(sub_category_type.sub_category.id),
+        );
       }
     } catch (error: any) {
       if (error?.response?.status === 404) {
@@ -399,6 +458,7 @@ const CreateUpdateProductPage = () => {
   };
 
   useEffect(() => {
+    fetchAllCategories();
     if (isEditMode) fetchSubCategoryDetails();
   }, [isEditMode, fetchSubCategoryDetails]);
 
@@ -609,6 +669,56 @@ const CreateUpdateProductPage = () => {
                 error={touched.name && errors.name ? errors.name : ""}
               />
               <Select
+                label="Select Category"
+                className="mb-5 w-full lg:w-1/2"
+                name="categoryId"
+                value={values.categoryId}
+                disabled={isFieldDisabled}
+                placeholder="Select category"
+                required
+                items={categories.map((c) => ({
+                  label: c.name,
+                  value: String(c.id),
+                }))}
+                onChange={(e) => {
+                  handleChange(e);
+                  fetchAllSubCategoriesWithId(e.target.value);
+                  setFieldValue("subCategoryId", "");
+                  setFieldValue("subCategoryTypeId", "");
+                }}
+                onBluer={handleBlur}
+                error={
+                  touched.categoryId && errors.categoryId
+                    ? errors.categoryId
+                    : ""
+                }
+              />
+
+              <Select
+                label="Select Subcategory"
+                className="mb-5 w-full lg:w-1/2"
+                name="subCategoryId"
+                value={values.subCategoryId}
+                disabled={isFieldDisabled}
+                placeholder="Select subcategory"
+                required
+                items={subCategories.map((c) => ({
+                  label: c.name,
+                  value: String(c.id),
+                }))}
+                onChange={(e) => {
+                  handleChange(e);
+                  fetchAllSubCategoriesTypeWithId(e.target.value);
+                  setFieldValue("subCategoryTypeId", "");
+                }}
+                onBluer={handleBlur}
+                error={
+                  touched.subCategoryId && errors.subCategoryId
+                    ? errors.subCategoryId
+                    : ""
+                }
+              />
+              <Select
                 label="Select Subcategory type"
                 className="mb-5 w-full lg:w-1/2"
                 name="subCategoryTypeId"
@@ -617,12 +727,7 @@ const CreateUpdateProductPage = () => {
                 placeholder="Select subcategory type"
                 required
                 items={subCategoriesType.map((c) => ({
-                  label:
-                    c.sub_category.category.name +
-                    " - " +
-                    c.sub_category.name +
-                    " - " +
-                    c.name,
+                  label: c.name,
                   value: String(c.id),
                 }))}
                 onChange={(e) => {
