@@ -377,7 +377,7 @@ const SizeDialog = ({
       if (nameError) {
         return;
       }
-    
+
 
       const response = await apiService.post(
         `/size`,
@@ -787,8 +787,8 @@ const SizeDialog = ({
                                     </label>
                                     <Field
                                       name={`footwearSizes.${index}.ukSize`}
-                                      type="text"
                                       placeholder="Enter UK Size"
+                                      type="text"
                                       className="w-full rounded-md border border-gray-300 p-2"
                                     />
                                     <ErrorMessage
@@ -803,9 +803,9 @@ const SizeDialog = ({
                                     </label>
                                     <Field
                                       name={`footwearSizes.${index}.usSize`}
-                                      type="text"
                                       placeholder="Enter US Size"
                                       className="w-full rounded-md border border-gray-300 p-2"
+                                      type="text"
                                     />
                                     <ErrorMessage
                                       name={`footwearSizes.${index}.usSize`}
