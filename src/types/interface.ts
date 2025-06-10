@@ -356,3 +356,14 @@ export interface IResendOtpExpiryLimitResponse {
   data: { data: { resend_otp_limit_expires_at: string } };
   status: number;
 }
+
+export interface IProductDetailKey {
+  id: number;
+  name: string;
+  create_at: string;
+  updated_at: string;
+}
+export interface IProductDetailKeyApiResponse {
+  data: { data: { items: IProductDetailKey[]; meta: IPaginationData } };
+  status: number;
+}
