@@ -1,8 +1,8 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
-import { Formik, Field, ErrorMessage } from "formik";
+import { Formik } from "formik";
 import * as Yup from "yup";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { CheckCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import Layout from "@/components/Layouts";
@@ -34,7 +34,7 @@ interface FormValues {
 }
 
 // Interfaces
-interface ProductDetailKeyResponse {
+interface ProductSpecificationKeyResponse {
   data: {
     id: string;
     name: string;
@@ -163,7 +163,7 @@ const SubmitButton = ({
   </button>
 );
 
-const CreateUpdateProductDetailKeyPage = () => {
+const CreateUpdateProductSpecificationKeyPage = () => {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
@@ -210,8 +210,8 @@ const CreateUpdateProductDetailKeyPage = () => {
       setIsChecking(true);
       try {
         const endpoint = isEditMode
-          ? `/product/additional-details-key/check?id=${id}&name=${encodeURIComponent(name)}`
-          : `/product/additional-details-key/check?name=${encodeURIComponent(name)}`;
+          ? `/product/specification-key/check?id=${id}&name=${encodeURIComponent(name)}`
+          : `/product/specification-key/check?name=${encodeURIComponent(name)}`;
 
         const response = await apiService.get<NameAvailabilityResponse>(
           endpoint,
@@ -248,25 +248,25 @@ const CreateUpdateProductDetailKeyPage = () => {
   );
 
   // Form submission handler
-  const createOrUpdateProductDetailKey = useCallback(
+  const createOrUpdateProductSpecificationKey = useCallback(
     async (values: FormValues) => {
       setIsLoading(true);
 
       const endpoint = isEditMode
-        ? `/product/additional-details-key/${id}`
-        : "/product/additional-details-key";
+        ? `/product/specification-key/${id}`
+        : "/product/specification-key";
 
       const method = isEditMode ? apiService.patch : apiService.post;
       const successMessage = isEditMode
-        ? "Product detail key updated successfully"
-        : "Product detail key created successfully";
+        ? "Product specification key updated successfully"
+        : "Product specification key created successfully";
 
       try {
         const response = await method(endpoint, values, { withAuth: true });
 
         if (response?.status === 200) {
           toast.success(successMessage);
-          router.push("/product-detail-key");
+          router.push("/product-specification-key");
         }
       } catch (error: unknown) {
         const msg = handleApiError(
@@ -287,18 +287,18 @@ const CreateUpdateProductDetailKeyPage = () => {
       values: FormValues,
       { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void },
     ) => {
-      await createOrUpdateProductDetailKey(values);
+      await createOrUpdateProductSpecificationKey(values);
       setSubmitting(false);
     },
-    [createOrUpdateProductDetailKey],
+    [createOrUpdateProductSpecificationKey],
   );
 
   // Fetch category details in edit mode
   const getCategoryDetails = useCallback(async () => {
     try {
       setCenterLoader(true);
-      const response = await apiService.get<ProductDetailKeyResponse>(
-        `/product/additional-details-key/${id}`,
+      const response = await apiService.get<ProductSpecificationKeyResponse>(
+        `/product/specification-key/${id}`,
         { withAuth: true },
       );
 
@@ -311,8 +311,8 @@ const CreateUpdateProductDetailKeyPage = () => {
       }
     } catch (error: unknown) {
       if ((error as ApiError)?.response?.status === 404) {
-        toast.error("Product detail key not found.");
-        router.push("/product-detail-key");
+        toast.error("Product specification key not found.");
+        router.push("/product-specification-key");
         return;
       }
       toast.error(
@@ -348,7 +348,7 @@ const CreateUpdateProductDetailKeyPage = () => {
     <Layout>
       <CentralLoader loading={centerLoader} />
       <h2 className="mb-6 text-[26px] font-bold leading-[30px] text-dark dark:text-white">
-        {isEditMode ? "Edit" : "Create"} Product Detail Key
+        {isEditMode ? "Edit" : "Create"} Product Specification Key
       </h2>
       <div className="rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">
         <div className="w-full p-4">
@@ -411,4 +411,4 @@ const CreateUpdateProductDetailKeyPage = () => {
   );
 };
 
-export default CreateUpdateProductDetailKeyPage;
+export default CreateUpdateProductSpecificationKeyPage;
