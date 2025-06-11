@@ -40,6 +40,12 @@ export const NAV_DATA = [
         icon: Icons.ShopByCategoryIcon,
         items: [],
       },
+      {
+        title: "Sizes",
+        url: "/sizes",
+        icon: Icons.SizeIcon,
+        items: [],
+      },
     ],
   },
   {
