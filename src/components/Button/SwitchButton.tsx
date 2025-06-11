@@ -9,28 +9,33 @@ interface SwitchButtonProps {
   leftText?: string;
   rightText?: string;
   showColor?: boolean;
+  name?: string;
 }
 
 const SwitchButton: React.FC<SwitchButtonProps> = ({
-  enabled: initialEnabled = false,
+  // enabled: initialEnabled = false,
+  enabled = false,
   onChange,
   label = "",
   title = "",
   leftText = "",
   rightText = "",
-  showColor = true
+  name = "",
+  showColor = true,
 }) => {
-  const [enabled, setEnabled] = useState(initialEnabled);
+  // const [enabled, setEnabled] = useState(initialEnabled);
 
   const handleToggle = () => {
-    const newState = !enabled;
-    setEnabled(newState);
-    onChange?.(newState);
+
+    // const newState = !enabled;
+    // setEnabled(newState);
+    // onChange?.(newState);
   };
 
   return (
     <div className="mb-2 flex items-center gap-2">
       <button
+        name={name}
         title={title}
         onClick={handleToggle}
         type="button"
@@ -40,14 +45,14 @@ const SwitchButton: React.FC<SwitchButtonProps> = ({
       >
         <span
           className={`absolute left-1 inline-flex h-4 w-4 items-center justify-center text-[10px] font-medium transition-all duration-300 ${
-            enabled ? "opacity-30" : "opacity-100 bg-white rounded-full"
+            enabled ? "opacity-30" : "rounded-full bg-white opacity-100"
           }`}
         >
           {leftText}
         </span>
         <span
           className={`absolute right-1 inline-flex h-4 w-4 items-center justify-center text-[10px] font-medium transition-all duration-300 ${
-            enabled ? "opacity-100 bg-white rounded-full" : "opacity-30"
+            enabled ? "rounded-full bg-white opacity-100" : "opacity-30"
           }`}
         >
           {rightText}
