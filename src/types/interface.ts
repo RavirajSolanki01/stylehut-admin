@@ -106,6 +106,15 @@ export interface IGetAllSubCategoriesType {
   status: number;
 }
 
+export interface IProductAdditionalDetail {
+  id: number;
+  key_id: string;
+  value: string;
+  key_name?: string;
+  create_at?: string;
+  updated_at?: string;
+}
+
 export interface IProduct {
   size_quantities: {
     id: number;
@@ -139,6 +148,8 @@ export interface IProduct {
   variant_id: string;
   relatedProducts: IProduct[];
   custom_product_id: string;
+  additional_details?: IProductAdditionalDetail[];
+  special_details?: IProductAdditionalDetail[];
 }
 
 export interface IProductApiResponse {

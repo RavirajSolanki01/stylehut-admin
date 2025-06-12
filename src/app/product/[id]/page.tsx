@@ -27,6 +27,7 @@ import { fileValidation } from "@/utils/schema";
 import { shouldEnableButton } from "@/utils/button-toggler";
 import { getMaxKeyValue } from "@/utils/common";
 import SizeDialog from "./SizeDialog";
+import { ChevronUpIcon, TrashIcon } from "lucide-react";
 
 type FormValues = {
   name: string;
@@ -40,6 +41,14 @@ type FormValues = {
   quantity: number;
   images: string[] | File[];
   size: string;
+  additionalDetails: {
+    id: string;
+    value: string;
+  }[];
+  specialDetails: {
+    id: string;
+    value: string;
+  }[];
 };
 
 const initialFormValues: FormValues = {
@@ -54,6 +63,8 @@ const initialFormValues: FormValues = {
   images: [],
   discount: 0,
   size: "",
+  additionalDetails: [{ id: "", value: "" }],
+  specialDetails: [{ id: "", value: "" }],
 };
 
 const CreateUpdateProductPage = () => {
@@ -76,9 +87,9 @@ const CreateUpdateProductPage = () => {
   const [size, setSize] = useState<
     { id: number; name: string; size: string }[]
   >([]);
-  const [sizeQuantity, setSizeQuantity] = useState<{
-    [key: string]: string;
-  }>({});
+  const [sizeQuantity, setSizeQuantity] = useState<{ [key: string]: string }>(
+    {},
+  );
   const [priceOfSize, setPriceOfSize] = useState<{ [key: string]: string }>({});
   const [discountOfSize, setDiscountOfSize] = useState<{
     [key: string]: string;
@@ -97,16 +108,20 @@ const CreateUpdateProductPage = () => {
     useState<boolean>(false);
   const [brands, setBrand] = useState<IBrand[]>([]);
   const [deletedImages, setDeletedImages] = useState<string[]>([]);
-
+  const [additionalDetailsKeys, setAdditionalDetailsKeys] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [specialDetailsKeys, setSpecialDetailsKeys] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [loadingStates, setLoadingStates] = useState({
     productLoading: false,
     formSubmitting: false,
   });
-
   const [isSizeChanged, setIsSizeChanged] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [_, setHasPrice] = useState(false);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const formik = useFormik<FormValues>({
     initialValues: initialFormValues,
@@ -116,23 +131,18 @@ const CreateUpdateProductPage = () => {
         .required("Name is required")
         .max(40, "Name must be 40 characters or less")
         .min(2, "Name must be at least 2 characters"),
-
       description: Yup.string()
         .trim()
         .required("Description is required")
         .max(1024, "Description must be 1024 characters or less")
         .min(10, "Description must be at least 10 characters"),
-
       categoryId: Yup.string().trim().required("Please select a category"),
-
       subCategoryId: Yup.string()
         .trim()
         .required("Please select a subcategory"),
-
       subCategoryTypeId: Yup.string()
         .trim()
         .required("Please select a subcategory type"),
-
       brandId: Yup.string().trim().required("Please select a brand"),
       images: Yup.array()
         .of(
@@ -140,10 +150,7 @@ const CreateUpdateProductPage = () => {
             "customValidation",
             "Only JPG, JPEG, PNG allowed",
             function (value) {
-              // Allow strings (preloaded URLs) to pass without validation
               if (typeof value === "string") return true;
-
-              // Use your existing fileValidation test for Files
               return fileValidation.isValidSync(value);
             },
           ),
@@ -156,10 +163,64 @@ const CreateUpdateProductPage = () => {
         .typeError("Price must be a number")
         .required("Price is required")
         .moreThan(0, "Price must be greater than 0"),
+      additionalDetails: Yup.array()
+        .of(
+          Yup.object().shape({
+            id: Yup.string().required("Key is required"),
+            value: Yup.string().required("Value is required").trim(),
+          }),
+        )
+        .min(1, "At least one row is required"),
+      specialDetails: Yup.array()
+        .of(
+          Yup.object().shape({
+            id: Yup.string().required("Key is required"),
+            value: Yup.string().required("Value is required").trim(),
+          }),
+        )
+        .min(1, "At least one row is required"),
     }),
     onSubmit: (values) => handleSubmit(values),
     enableReinitialize: true,
   });
+
+  const handleAddAdditionalDetailsRow = () => {
+    formik.setValues({
+      ...formik.values,
+      additionalDetails: [
+        ...formik.values.additionalDetails,
+        { id: "", value: "" },
+      ],
+    });
+  };
+
+  const handleAddSpecialDetailsRow = () => {
+    formik.setValues({
+      ...formik.values,
+      specialDetails: [...formik.values.specialDetails, { id: "", value: "" }],
+    });
+  };
+
+  const handleRemoveAdditionalDetailsRow = (index: number) => {
+    const newDetails = formik.values.additionalDetails.filter(
+      (_, i) => i !== index,
+    );
+    formik.setValues({ ...formik.values, additionalDetails: newDetails });
+  };
+
+  const handleRemoveSpecialDetailsRow = (index: number) => {
+    const newDetails = formik.values.specialDetails.filter(
+      (_, i) => i !== index,
+    );
+    formik.setValues({ ...formik.values, specialDetails: newDetails });
+  };
+
+  const selectedDropdownValues = formik.values.additionalDetails.map(
+    (d) => d.id,
+  );
+  const selectedSpecialDropdownValues = formik.values.specialDetails.map(
+    (d) => d.id,
+  );
 
   const fetchAllCategories = useCallback(async () => {
     try {
@@ -248,7 +309,42 @@ const CreateUpdateProductPage = () => {
     }
   }, []);
 
-  // Fetch product data
+  const fetchAdditionalDetailsKeys = useCallback(async () => {
+    try {
+      const response = await apiService.get<{
+        data: { id: string; name: string }[];
+      }>("/product/additional-details-key", { withAuth: true });
+      if (response.status === 200) {
+        const data = response.data.data.map((item) => ({
+          id: item.id.toString(),
+          name: item.name,
+        }));
+        setAdditionalDetailsKeys(data);
+      }
+    } catch (error) {
+      console.error("Error fetching additional details keys:", error);
+      toast.error("Failed to load additional details keys");
+    }
+  }, []);
+
+  const fetchSpecialDetailsKeys = useCallback(async () => {
+    try {
+      const response = await apiService.get<{
+        data: { id: string; name: string }[];
+      }>("/product/specification-key", { withAuth: true });
+      if (response.status === 200) {
+        const data = response.data.data.map((item) => ({
+          id: item.id.toString(),
+          name: item.name,
+        }));
+        setSpecialDetailsKeys(data);
+      }
+    } catch (error) {
+      console.error("Error fetching special details keys:", error);
+      toast.error("Failed to load special details keys");
+    }
+  }, []);
+
   const fetchSubCategoryDetails = useCallback(async () => {
     try {
       const response: { data: { data: IProduct }; status: number } =
@@ -276,6 +372,8 @@ const CreateUpdateProductPage = () => {
           size_quantities,
           variant_id,
           custom_product_id,
+          additional_details,
+          special_details,
         } = response.data.data;
         setCurrentProductData({
           custom_product_id: custom_product_id,
@@ -287,8 +385,12 @@ const CreateUpdateProductPage = () => {
         } else if (isEditMode && isVariantMode) {
           setMainProduct([...relatedProducts, response.data.data]);
         }
-        setHasPrice(!!size_quantities.find((item) => Number(item.price) > 0)?.price);
-        setEnabled(!!size_quantities.find((item) => Number(item.price) > 0)?.price);
+        setHasPrice(
+          !!size_quantities.find((item) => Number(item.price) > 0)?.price,
+        );
+        setEnabled(
+          !!size_quantities.find((item) => Number(item.price) > 0)?.price,
+        );
 
         const customObject = size_quantities.reduce((acc, item) => {
           const sizeId = item.size_data.id;
@@ -351,6 +453,14 @@ const CreateUpdateProductPage = () => {
           discount,
           size: response.data.data?.size_quantities[0]?.size_data
             ?.name as string,
+          additionalDetails: additional_details?.map((detail) => ({
+            id: detail.id.toString(),
+            value: detail.value,
+          })) || [{ id: "", value: "" }],
+          specialDetails: special_details?.map((detail) => ({
+            id: detail.id.toString(),
+            value: detail.value,
+          })) || [{ id: "", value: "" }],
         });
 
         fetchAllSubCategoriesWithId(String(category_id));
@@ -407,6 +517,15 @@ const CreateUpdateProductPage = () => {
       !isEditMode &&
         formData.append("is_main_product", isVariantMode ? "false" : "true");
 
+      formData.append(
+        "product_additional_details",
+        JSON.stringify(values.additionalDetails),
+      );
+      formData.append(
+        "product_specifications",
+        JSON.stringify(values.specialDetails),
+      );
+
       const response = await method(endpoint, formData, {
         withAuth: true,
         headers: {
@@ -446,30 +565,6 @@ const CreateUpdateProductPage = () => {
       );
   };
 
-  useEffect(() => {
-    fetchAllCategories();
-    if (isEditMode) fetchSubCategoryDetails();
-  }, [isEditMode, fetchAllCategories, fetchSubCategoryDetails]);
-
-  useEffect(() => {
-    fetchAllBrand();
-    fetchAllSizeData();
-  }, []);
-
-  useEffect(() => {
-    // Only update price from priceOfSize if we're in dynamic pricing mode and have values
-    if (enabled && Object.keys(priceOfSize).length > 0) {
-      const result = getMaxKeyValue(priceOfSize);
-      formik.setFieldValue("price", result?.value);
-      formik.setFieldValue(
-        "discount",
-        result?.key
-          ? discountOfSize["discount==" + result?.key.split("price==")[1]]
-          : 0,
-      );
-    }
-  }, [priceOfSize, discountOfSize, enabled]);
-
   const handleSizeQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setSizeQuantity((prev) => ({ ...prev, [name]: value }));
@@ -508,9 +603,7 @@ const CreateUpdateProductPage = () => {
     }
   };
 
-  // Add size  / Save size button
   const handleAddSizeQuantityData = async () => {
-
     const sizeQuantityData = size
       .filter((item) => item.name === sizeType)
       .map((item) => "quantity==" + item.id + "==" + item.size);
@@ -518,7 +611,7 @@ const CreateUpdateProductPage = () => {
     for (const item of sizeQuantityData) {
       if (!sizeQuantity[item]) {
         setIsSizeQuantityAdded(true);
-        return; // This will exit handleAddSizeQuantityData
+        return;
       }
     }
 
@@ -566,8 +659,6 @@ const CreateUpdateProductPage = () => {
             : 0,
         }));
 
-      
-
       let response;
 
       if (isEditMode) {
@@ -578,7 +669,6 @@ const CreateUpdateProductPage = () => {
           payload = buildPatchPayload();
           response = await apiService.patch(url, payload, { withAuth: true });
         } else {
-          // DELETE first, then POST
           await apiService.delete(
             `${url}?custom_product_id=${currentProductData.custom_product_id}`,
             { withAuth: true },
@@ -605,9 +695,33 @@ const CreateUpdateProductPage = () => {
     }
   };
 
+  useEffect(() => {
+    fetchAllCategories();
+    if (isEditMode) fetchSubCategoryDetails();
+  }, [isEditMode, fetchAllCategories, fetchSubCategoryDetails]);
+
+  useEffect(() => {
+    fetchAllBrand();
+    fetchAllSizeData();
+    fetchAdditionalDetailsKeys();
+    fetchSpecialDetailsKeys();
+  }, []);
+
+  useEffect(() => {
+    if (enabled && Object.keys(priceOfSize).length > 0) {
+      const result = getMaxKeyValue(priceOfSize);
+      formik.setFieldValue("price", result?.value);
+      formik.setFieldValue(
+        "discount",
+        result?.key
+          ? discountOfSize["discount==" + result?.key.split("price==")[1]]
+          : 0,
+      );
+    }
+  }, [priceOfSize, discountOfSize, enabled]);
+
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
     formik;
-
 
   const isFieldDisabled = isVariantMode
     ? isVariantMode
@@ -637,7 +751,6 @@ const CreateUpdateProductPage = () => {
                         src={item.image[0]}
                         alt={item.name}
                       />
-
                       <div>{item.name}</div>
                     </div>
                   ))}
@@ -755,6 +868,196 @@ const CreateUpdateProductPage = () => {
                 onBluer={handleBlur}
                 error={touched.brandId && errors.brandId ? errors.brandId : ""}
               />
+
+              <div className="mb-5 w-full lg:w-1/2">
+                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                  Additional Details
+                </label>
+
+                {formik.values.additionalDetails.map((detail, index) => {
+                  const dropdownError = (
+                    formik.errors.additionalDetails?.[index] as any
+                  )?.id;
+                  const inputTextError = (
+                    formik.errors.additionalDetails?.[index] as any
+                  )?.value;
+                  return (
+                    <div key={detail.id} className="mb-3 flex w-full gap-2">
+                      <div className="w-full">
+                        <div className="relative">
+                          <select
+                            className="disabled:bg-whiter w-full appearance-none rounded-lg border border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-dark-3 dark:bg-dark-2 dark:focus:border-primary [&>option]:text-dark-5 dark:[&>option]:text-dark-6"
+                            name={`additionalDetails[${index}].id`}
+                            value={detail.id}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                          >
+                            <option value="">Select option</option>
+                            {additionalDetailsKeys.map((opt) => {
+                              const isDisabled =
+                                selectedDropdownValues.includes(opt.id) &&
+                                detail.id !== opt.id;
+                              return (
+                                <option
+                                  key={opt.id}
+                                  value={opt.id}
+                                  disabled={isDisabled}
+                                >
+                                  {opt.name}
+                                </option>
+                              );
+                            })}
+                          </select>
+                          <ChevronUpIcon className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 rotate-180" />
+                        </div>
+                        {dropdownError && (
+                          <div className="text-sm text-red-500">
+                            {dropdownError}
+                          </div>
+                        )}
+                      </div>
+                      <div className="w-full">
+                        <input
+                          type="text"
+                          placeholder="Value"
+                          className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary disabled:cursor-default disabled:bg-gray-2 data-[active=true]:border-primary dark:border-dark-3 dark:bg-dark-2 dark:focus:border-primary dark:disabled:bg-dark dark:data-[active=true]:border-primary"
+                          value={detail.value}
+                          onBlur={formik.handleBlur}
+                          name={`additionalDetails[${index}].value`}
+                          onChange={formik.handleChange}
+                        />
+                        {inputTextError && (
+                          <div className="text-sm text-red-500">
+                            {inputTextError}
+                          </div>
+                        )}
+                      </div>
+                      {formik.values.additionalDetails.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleRemoveAdditionalDetailsRow(index)
+                          }
+                          className="flex h-[50px] w-[50px] min-w-[50px] items-center justify-center rounded-full border border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10"
+                        >
+                          <TrashIcon />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+                {typeof formik.errors.additionalDetails === "string" && (
+                  <div className="text-red-500">
+                    {formik.errors.additionalDetails}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handleAddAdditionalDetailsRow}
+                  disabled={
+                    formik.values.additionalDetails.length >=
+                    additionalDetailsKeys.length
+                  }
+                  className="mt-2 flex items-center gap-1 text-primary hover:underline"
+                >
+                  <span>+ Add More</span>
+                </button>
+              </div>
+
+              <div className="mb-5 w-full lg:w-1/2">
+                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                  Specifications Details
+                </label>
+
+                {formik.values.specialDetails.map((detail, index) => {
+                  const dropdownError = (
+                    formik.errors.specialDetails?.[index] as any
+                  )?.id;
+                  const inputTextError = (
+                    formik.errors.specialDetails?.[index] as any
+                  )?.value;
+                  return (
+                    <div key={detail.id} className="mb-3 flex w-full gap-2">
+                      <div className="w-full">
+                        <div className="relative">
+                          <select
+                            className="disabled:bg-whiter w-full appearance-none rounded-lg border border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-dark-3 dark:bg-dark-2 dark:focus:border-primary [&>option]:text-dark-5 dark:[&>option]:text-dark-6"
+                            name={`specialDetails[${index}].id`}
+                            value={detail.id}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                          >
+                            <option value="">Select option</option>
+                            {specialDetailsKeys.map((opt) => {
+                              const isDisabled =
+                                selectedSpecialDropdownValues.includes(
+                                  opt.id,
+                                ) && detail.id !== opt.id;
+                              return (
+                                <option
+                                  key={opt.id}
+                                  value={opt.id}
+                                  disabled={isDisabled}
+                                >
+                                  {opt.name}
+                                </option>
+                              );
+                            })}
+                          </select>
+                          <ChevronUpIcon className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 rotate-180" />
+                        </div>
+                        {dropdownError && (
+                          <div className="text-sm text-red-500">
+                            {dropdownError}
+                          </div>
+                        )}
+                      </div>
+                      <div className="w-full">
+                        <input
+                          type="text"
+                          placeholder="Value"
+                          className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary disabled:cursor-default disabled:bg-gray-2 data-[active=true]:border-primary dark:border-dark-3 dark:bg-dark-2 dark:focus:border-primary dark:disabled:bg-dark dark:data-[active=true]:border-primary"
+                          value={detail.value}
+                          onBlur={formik.handleBlur}
+                          name={`specialDetails[${index}].value`}
+                          onChange={formik.handleChange}
+                        />
+                        {inputTextError && (
+                          <div className="text-sm text-red-500">
+                            {inputTextError}
+                          </div>
+                        )}
+                      </div>
+                      {formik.values.specialDetails.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSpecialDetailsRow(index)}
+                          className="flex h-[50px] w-[50px] min-w-[50px] items-center justify-center rounded-full border border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10"
+                        >
+                          <TrashIcon />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+                {typeof formik.errors.specialDetails === "string" && (
+                  <div className="text-red-500">
+                    {formik.errors.specialDetails}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handleAddSpecialDetailsRow}
+                  disabled={
+                    formik.values.specialDetails.length >=
+                    additionalDetailsKeys.length
+                  }
+                  className="mt-2 flex items-center gap-1 text-primary hover:underline"
+                >
+                  <span>+ Add More</span>
+                </button>
+              </div>
+
               <InputGroup
                 className="mb-5 w-full lg:w-1/2"
                 type="string"
@@ -909,8 +1212,8 @@ const CreateUpdateProductPage = () => {
                               onChange={(e) => {
                                 const value = e.target.value;
                                 if (/^\d*$/.test(value)) {
+                                  handleDiscountOfSizeChange(e);
                                 }
-                                handleDiscountOfSizeChange(e);
                               }}
                             />
                           )}
@@ -997,7 +1300,6 @@ const CreateUpdateProductPage = () => {
             </form>
           </div>
         </div>
-        {/* <CommonDialog onConfirm={()=>{}} onOpenChange={()=>{}} open={isAddDialogOpen}  /> */}
         <SizeDialog
           onOpenChange={() => setIsAddDialogOpen((pre) => !pre)}
           open={isAddDialogOpen}
