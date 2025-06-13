@@ -43,6 +43,17 @@ export const NAV_DATA = [
     ],
   },
   {
+    label: "Orders",
+    items: [
+      {
+        title: "Orders",
+        url: "/orders",
+        icon: Icons.OrdersIcon,
+        items: [],
+      },
+    ],
+  },
+  {
     label: "User Management",
     items: [
       {
