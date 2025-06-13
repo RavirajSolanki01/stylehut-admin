@@ -372,8 +372,8 @@ const CreateUpdateProductPage = () => {
           size_quantities,
           variant_id,
           custom_product_id,
-          additional_details,
-          special_details,
+          product_specifications,
+          product_additional_details,
         } = response.data.data;
         setCurrentProductData({
           custom_product_id: custom_product_id,
@@ -453,12 +453,12 @@ const CreateUpdateProductPage = () => {
           discount,
           size: response.data.data?.size_quantities[0]?.size_data
             ?.name as string,
-          additionalDetails: additional_details?.map((detail) => ({
-            id: detail.id.toString(),
+          additionalDetails: product_additional_details?.map((detail) => ({
+            id: detail.additional_key_id.toString(),
             value: detail.value,
           })) || [{ id: "", value: "" }],
-          specialDetails: special_details?.map((detail) => ({
-            id: detail.id.toString(),
+          specialDetails: product_specifications?.map((detail) => ({
+            id: detail.specification_key_id.toString(),
             value: detail.value,
           })) || [{ id: "", value: "" }],
         });
@@ -516,15 +516,19 @@ const CreateUpdateProductPage = () => {
       formData.append("variant_id", variantId);
       !isEditMode &&
         formData.append("is_main_product", isVariantMode ? "false" : "true");
-
+      const additionalDetails = values.additionalDetails.map((item) => ({
+        value: item.value.trim(),
+        id: +item.id,
+      }));
+      const specialDetails = values.specialDetails.map((item) => ({
+        value: item.value.trim(),
+        id: +item.id,
+      }));
       formData.append(
         "product_additional_details",
-        JSON.stringify(values.additionalDetails),
+        JSON.stringify(additionalDetails),
       );
-      formData.append(
-        "product_specifications",
-        JSON.stringify(values.specialDetails),
-      );
+      formData.append("product_specifications", JSON.stringify(specialDetails));
 
       const response = await method(endpoint, formData, {
         withAuth: true,
@@ -886,6 +890,7 @@ const CreateUpdateProductPage = () => {
                       <div className="w-full">
                         <div className="relative">
                           <select
+                            disabled={isFieldDisabled}
                             className="disabled:bg-whiter w-full appearance-none rounded-lg border border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-dark-3 dark:bg-dark-2 dark:focus:border-primary [&>option]:text-dark-5 dark:[&>option]:text-dark-6"
                             name={`additionalDetails[${index}].id`}
                             value={detail.id}
@@ -917,8 +922,8 @@ const CreateUpdateProductPage = () => {
                         )}
                       </div>
                       <div className="w-full">
-                        <input
-                          type="text"
+                        <textarea
+                          disabled={isFieldDisabled}
                           placeholder="Value"
                           className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary disabled:cursor-default disabled:bg-gray-2 data-[active=true]:border-primary dark:border-dark-3 dark:bg-dark-2 dark:focus:border-primary dark:disabled:bg-dark dark:data-[active=true]:border-primary"
                           value={detail.value}
@@ -956,7 +961,7 @@ const CreateUpdateProductPage = () => {
                   onClick={handleAddAdditionalDetailsRow}
                   disabled={
                     formik.values.additionalDetails.length >=
-                    additionalDetailsKeys.length
+                      additionalDetailsKeys.length || isFieldDisabled
                   }
                   className="mt-2 flex items-center gap-1 text-primary hover:underline"
                 >
@@ -981,6 +986,7 @@ const CreateUpdateProductPage = () => {
                       <div className="w-full">
                         <div className="relative">
                           <select
+                            disabled={isFieldDisabled}
                             className="disabled:bg-whiter w-full appearance-none rounded-lg border border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-dark-3 dark:bg-dark-2 dark:focus:border-primary [&>option]:text-dark-5 dark:[&>option]:text-dark-6"
                             name={`specialDetails[${index}].id`}
                             value={detail.id}
@@ -1015,6 +1021,7 @@ const CreateUpdateProductPage = () => {
                       <div className="w-full">
                         <input
                           type="text"
+                          disabled={isFieldDisabled}
                           placeholder="Value"
                           className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 outline-none transition focus:border-primary disabled:cursor-default disabled:bg-gray-2 data-[active=true]:border-primary dark:border-dark-3 dark:bg-dark-2 dark:focus:border-primary dark:disabled:bg-dark dark:data-[active=true]:border-primary"
                           value={detail.value}
@@ -1050,7 +1057,7 @@ const CreateUpdateProductPage = () => {
                   onClick={handleAddSpecialDetailsRow}
                   disabled={
                     formik.values.specialDetails.length >=
-                    additionalDetailsKeys.length
+                      additionalDetailsKeys.length || isFieldDisabled
                   }
                   className="mt-2 flex items-center gap-1 text-primary hover:underline"
                 >

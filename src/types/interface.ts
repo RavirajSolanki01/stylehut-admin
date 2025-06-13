@@ -148,8 +148,18 @@ export interface IProduct {
   variant_id: string;
   relatedProducts: IProduct[];
   custom_product_id: string;
-  additional_details?: IProductAdditionalDetail[];
-  special_details?: IProductAdditionalDetail[];
+  product_additional_details?: {
+    id: number;
+    value: string;
+    additional_key_id: string;
+    product_id: string;
+  }[];
+  product_specifications?: {
+    id: number;
+    value: string;
+    specification_key_id: string;
+    product_id: string;
+  }[];
 }
 
 export interface IProductApiResponse {

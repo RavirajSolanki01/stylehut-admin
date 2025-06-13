@@ -40,6 +40,18 @@ export const NAV_DATA = [
         icon: Icons.ShopByCategoryIcon,
         items: [],
       },
+      {
+        title: "Specification",
+        url: "/product/product-specification-key",
+        icon: Icons.ProductIcon,
+        items: [],
+      },
+      {
+        title: "Additional Detail",
+        url: "/product/product-detail-key",
+        icon: Icons.ProductIcon,
+        items: [],
+      },
     ],
   },
   {
