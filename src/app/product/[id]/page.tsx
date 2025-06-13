@@ -453,14 +453,20 @@ const CreateUpdateProductPage = () => {
           discount,
           size: response.data.data?.size_quantities[0]?.size_data
             ?.name as string,
-          additionalDetails: product_additional_details?.map((detail) => ({
-            id: detail.additional_key_id.toString(),
-            value: detail.value,
-          })) || [{ id: "", value: "" }],
-          specialDetails: product_specifications?.map((detail) => ({
-            id: detail.specification_key_id.toString(),
-            value: detail.value,
-          })) || [{ id: "", value: "" }],
+          additionalDetails:
+            product_additional_details && product_additional_details.length > 0
+              ? product_additional_details?.map((detail) => ({
+                  id: detail.additional_key_id.toString(),
+                  value: detail.value,
+                }))
+              : [{ id: "", value: "" }],
+          specialDetails:
+            product_specifications && product_specifications.length > 0
+              ? product_specifications?.map((detail) => ({
+                  id: detail.specification_key_id.toString(),
+                  value: detail.value,
+                }))
+              : [{ id: "", value: "" }],
         });
 
         fetchAllSubCategoriesWithId(String(category_id));
