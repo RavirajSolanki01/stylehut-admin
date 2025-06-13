@@ -84,8 +84,6 @@ export function transformSizesWithUniqueIds(
       is_cm: is_cm,
     });
 
-    
-
     if (type == "footwear") {
       const arr = [
         { label: "US", value: item.usSize },
@@ -100,7 +98,7 @@ export function transformSizesWithUniqueIds(
           size_field_value: field.value,
         });
       }
-    }else{
+    } else {
       for (const field of additionalFields) {
         size_chart_data.push({
           custom_size_id: custom_size_id,
@@ -116,3 +114,34 @@ export function transformSizesWithUniqueIds(
     size_chart_data,
   };
 }
+
+export const ORDER_STATUS = [
+  "PENDING",
+  "CONFIRMED",
+  "PROCESSING",
+  "SHIPPED",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+  "CANCELLED",
+  "RETURN_REQUESTED",
+  "RETURN_APPROVED",
+  "RETURN_REJECTED",
+  "RETURN_PICKUP_SCHEDULED",
+  "RETURN_PICKED",
+  "RETURN_RECEIVED",
+  "REFUND_INITIATED",
+  "REFUND_COMPLETED",
+];
+
+export const BLOCKED_ORDER_STATUS = [
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+  "CANCELLED",
+  "RETURN_REQUESTED",
+  "RETURN_REJECTED",
+  "RETURN_PICKUP_SCHEDULED",
+  "RETURN_PICKED",
+  "RETURN_RECEIVED",
+  "REFUND_INITIATED",
+  "REFUND_COMPLETED",
+];
