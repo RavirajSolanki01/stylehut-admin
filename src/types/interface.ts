@@ -106,6 +106,15 @@ export interface IGetAllSubCategoriesType {
   status: number;
 }
 
+export interface IProductAdditionalDetail {
+  id: number;
+  key_id: string;
+  value: string;
+  key_name?: string;
+  create_at?: string;
+  updated_at?: string;
+}
+
 export interface IProduct {
   size_quantities: {
     id: number;
@@ -139,6 +148,18 @@ export interface IProduct {
   variant_id: string;
   relatedProducts: IProduct[];
   custom_product_id: string;
+  product_additional_details?: {
+    id: number;
+    value: string;
+    additional_key_id: string;
+    product_id: string;
+  }[];
+  product_specifications?: {
+    id: number;
+    value: string;
+    specification_key_id: string;
+    product_id: string;
+  }[];
 }
 
 export interface IProductApiResponse {
@@ -354,5 +375,16 @@ export interface IOtpExpiryLimitResponse {
 
 export interface IResendOtpExpiryLimitResponse {
   data: { data: { resend_otp_limit_expires_at: string } };
+  status: number;
+}
+
+export interface IProductDetailKey {
+  id: number;
+  name: string;
+  create_at: string;
+  updated_at: string;
+}
+export interface IProductDetailKeyApiResponse {
+  data: { data: { items: IProductDetailKey[]; meta: IPaginationData } };
   status: number;
 }
